@@ -4,51 +4,31 @@ DGame.init("canvas", 1600, 800, 2);
 const player = {
   position: DGame.vector.create(100, 100),
   // velocity is like "next step"
-  velocity: DGame.vector.create(1, 0),
+  velocity: DGame.vector.create(0, 0),
   acc: DGame.vector.create(0, 0),
-
-  textPos: DGame.vector.create(0, 0),
-  pointPos: DGame.vector.create(0, 0),
 
   draw: function () {
     DGame.draw.circle(this.position.x, this.position.y, 10);
-    DGame.draw.line(
-      this.position.x,
-      this.position.y,
-      this.acc.x + this.pointPos.x,
-      this.acc.y + this.pointPos.y
-    );
-    DGame.draw.text(
-      this.textPos.x + this.position.x,
-      this.textPos.y + this.position.y,
-      DGame.vector.mag(this.acc)
-    );
   },
 
   update: function () {
-    const mouse = DGame.vector.create(DGame.mouse.x, DGame.mouse.y);
-    this.pointPos = DGame.vector.create(0, 30);
+    const random1 = DGame.math.randomNumber(-1, 1);
+    const random2 = DGame.math.randomNumber(-1, 1);
 
-    // get vector from player to mouse
-    const playerPointVector = DGame.vector.sub(this.pointPos, this.position);
+    const acc = DGame.vector.create(random1, random2);
 
-    // console.log(DGame.vector.mag(playerPointVector));
-    this.textPos = DGame.vector.mult(playerPointVector, 0.5);
-    // console.log(this.position.x);
-
-    // make a unit vector
-    // const unitAcc = DGame.vector.unitVector(this.acc);
-
-    // slow down a little
-    this.acc = DGame.vector.mult(playerPointVector, 0.0005);
-    this.velocity = DGame.vector.add(this.velocity, this.acc);
+    // low acc
+    this.acc = DGame.vector.mult(acc, 0.1);
+    const velocity1 = DGame.vector.add(this.velocity, this.acc);
+    // max velocity = 1
+    this.velocity = DGame.vector.limit(velocity1, 1);
+    console.log(DGame.vector.mag(this.velocity));
     this.position = DGame.vector.add(this.position, this.velocity);
   },
 };
 
 function update(deltaTime) {
   player.update();
-  // DGame.camera.set(player.position.x, player.position.y);
 }
 
 function draw() {
