@@ -4,15 +4,12 @@ DGame.init("canvas", 1600, 800, 2);
 const player = {
   position: DGame.vector.create(100, 100),
   // velocity is like "next step"
-  velocity: DGame.vector.create(1, 0),
+  velocity: DGame.vector.create(0, 0),
   acc: DGame.vector.create(0, 0),
 
   draw: function () {
     DGame.draw.circle(this.position.x, this.position.y, 10);
 
-    // velocity
-    console.log(DGame.mouse.x, DGame.mouse.y);
-    // const posVel = DGame.vector.sub(this.position, this.velocity);
     DGame.draw.line(
       this.position.x,
       this.position.y,
@@ -21,26 +18,55 @@ const player = {
     );
   },
 
+  applyForce: function (vector) {
+    this.acc = DGame.vector.add(this.acc, vector);
+  },
+
   update: function () {
     // "Motion 101"
 
-    const mousePos = DGame.vector.create(
-      DGame.mouse.x + DGame.camera.x,
-      DGame.mouse.y + DGame.camera.y
-    );
-    const vSelfToMouse = DGame.vector.sub(mousePos, this.position);
+    // const mousePos = DGame.vector.create(
+    //   DGame.mouse.x + DGame.camera.x,
+    //   DGame.mouse.y + DGame.camera.y
+    // );
+    // const vSelfToMouse = DGame.vector.sub(mousePos, this.position);
     // const unitVSelfToMouse = DGame.vector.unitVector(vSelfToMouse);
-    const slowVSelfToMouse = DGame.vector.mult(vSelfToMouse, 0.0001);
+    // const slowVSelfToMouse = DGame.vector.mult(vSelfToMouse, 0.0001);
 
-    this.acc = slowVSelfToMouse;
     this.velocity = DGame.vector.add(this.velocity, this.acc);
     this.position = DGame.vector.add(this.position, this.velocity);
+    this.acc = DGame.vector.create(0, 0);
   },
 };
+console.log(player);
+
+function egdes() {
+  if (player.position.y >= 200) {
+    player.position.y = 200;
+    player.velocity.y *= -1;
+  }
+  if (player.position.x >= 400) {
+    player.position.x = 400;
+    player.velocity.x *= -1;
+  }
+  // if (player.position.y >= 200) {
+  //   player.position.y = 200;
+  //   player.velocity.y *= -1;
+  // }
+  // if (player.position.y >= 200) {
+  //   player.position.y = 200;
+  //   player.velocity.y *= -1;
+  // }
+}
 
 function update(deltaTime) {
+  player.applyForce(DGame.vector.create(0, 0.01));
+  player.applyForce(DGame.vector.create(0.01, 0));
   player.update();
-  DGame.camera.set(player.position.x, player.position.y);
+
+  // DGame.camera.set(player.position.x, player.position.y);
+
+  egdes();
 }
 
 function draw() {
