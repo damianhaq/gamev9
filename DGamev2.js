@@ -113,6 +113,21 @@ export const DGame = {
       var factor = maxMagnitude / currentMagnitude;
       return { x: vector.x * factor, y: vector.y * factor };
     },
+
+    randomUnitVector: function () {
+      // Losowanie dwóch wartości z zakresu [-1, 1]
+      var random1 = Math.random() * 2 - 1;
+      var random2 = Math.random() * 2 - 1;
+
+      // Obliczanie długości wektora
+      var magnitude = Math.sqrt(random1 ** 2 + random2 ** 2);
+
+      // Normalizacja wektora do jednostkowego
+      var unitX = random1 / magnitude;
+      var unitY = random2 / magnitude;
+
+      return { x: unitX, y: unitY };
+    },
   },
 
   draw: {

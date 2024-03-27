@@ -12,10 +12,10 @@ const player = {
   },
 
   update: function () {
-    const random1 = DGame.math.randomNumber(-1, 1);
-    const random2 = DGame.math.randomNumber(-1, 1);
+    // const random1 = DGame.math.randomNumber(-1, 1);
+    // const random2 = DGame.math.randomNumber(-1, 1);
 
-    const acc = DGame.vector.create(random1, random2);
+    const acc = DGame.vector.randomUnitVector();
 
     // low acc
     this.acc = DGame.vector.mult(acc, 0.1);
