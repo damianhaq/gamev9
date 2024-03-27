@@ -3,13 +3,16 @@ export const DGame = {
   ctx: null,
   scaleFactor: 1,
 
-  mouse: { click: false, x: false, y: false },
+  mouse: {
+    click: false,
+    x: false,
+    y: false,
+  },
 
   camera: {
     x: 0,
     y: 0,
     set: function (x, y) {
-      // console.log(DGame.canvas.width);
       this.x = x - DGame.canvas.width / (2 * DGame.scaleFactor);
       this.y = y - DGame.canvas.height / (2 * DGame.scaleFactor);
     },
