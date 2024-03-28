@@ -7,9 +7,6 @@ DGame.init("canvas", 1600, 800, 2);
 const bigSpritev7 = new Image();
 bigSpritev7.src = "bigSpritev7.png";
 
-const tilePos = DGame.tiled.getTilePos(1995, jsonData);
-console.log(tilePos);
-
 const player = {
   position: DGame.vector.create(100, 100),
   // velocity is like "next step"
@@ -73,7 +70,7 @@ function update(deltaTime) {
   player.applyForce(DGame.vector.create(0.01, 0));
   player.update();
 
-  // DGame.camera.set(player.position.x, player.position.y);
+  DGame.camera.set(player.position.x, player.position.y);
 
   egdes();
 }
@@ -99,15 +96,15 @@ function draw() {
     spriteSheetData.elfM.idle.h,
     bigSpritev7
   );
-  DGame.draw.image(
-    tilePos.x,
-    tilePos.y,
-    jsonData.tilesets[0].tilewidth,
-    jsonData.tilesets[0].tileheight,
-    0,
-    0,
-    jsonData.tilesets[0].tilewidth,
-    jsonData.tilesets[0].tileheight,
+
+  DGame.tiled.drawChunk(
+    jsonData.layers[0].chunks[0],
+    jsonData.tilesets[0],
+    bigSpritev7
+  );
+  DGame.tiled.drawChunk(
+    jsonData.layers[0].chunks[1],
+    jsonData.tilesets[0],
     bigSpritev7
   );
 }

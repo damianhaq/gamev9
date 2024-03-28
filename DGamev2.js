@@ -188,16 +188,53 @@ export const DGame = {
   },
 
   tiled: {
-    getTilePos: function (id, jsonData) {
+    getTilePosFromSpritesheet: function (
+      id,
+      tilesetsColumns,
+      tilesetsTileWidth,
+      tilkesetsTileHeight
+    ) {
       // TODO: dodać wyszukiwanie tileset po nazwie "name":"spritesheet",
-      const columns = jsonData.tilesets[0].columns;
-      const tileWidth = jsonData.tilesets[0].tilewidth;
-      const tileHeight = jsonData.tilesets[0].tileheight;
 
-      const row = Math.floor(id / columns);
-      const column = id - row * columns;
+      const row = Math.floor((id - 1) / tilesetsColumns);
+      const column = id - 1 - row * tilesetsColumns;
 
-      return { x: column * tileWidth, y: row * tileHeight };
+      return { x: column * tilesetsTileWidth, y: row * tilkesetsTileHeight };
+    },
+
+    drawChunk: function (chunk, tileset, image) {
+      // this function draw chunk in correct position => chunk.x and chunk.y,
+      // so you dont have to specify where to draw this
+
+      // chunk position
+      const chunkX = chunk.x * tileset.tilewidth;
+      const chunkY = chunk.y * tileset.tileheight;
+
+      for (let i = 0; i < chunk.data.length; i++) {
+        const row = Math.floor(i / chunk.width);
+        const column = i - row * chunk.width;
+
+        if (chunk.data[i] !== 0) {
+          const tilePos = this.getTilePosFromSpritesheet(
+            chunk.data[i],
+            tileset.columns,
+            tileset.tilewidth,
+            tileset.tileheight
+          );
+
+          DGame.draw.image(
+            tilePos.x,
+            tilePos.y,
+            tileset.tilewidth,
+            tileset.tileheight,
+            0 + chunkX + column * tileset.tilewidth,
+            0 + chunkY + row * tileset.tileheight,
+            tileset.tilewidth,
+            tileset.tileheight,
+            image
+          );
+        }
+      }
     },
   },
 
