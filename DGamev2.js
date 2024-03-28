@@ -134,6 +134,29 @@ export const DGame = {
   },
 
   draw: {
+    image: function (
+      fromX,
+      fromY,
+      fromWidth,
+      fromHeight,
+      toX,
+      toY,
+      toWidth,
+      toHeight,
+      image
+    ) {
+      DGame.ctx.drawImage(
+        image,
+        fromX,
+        fromY,
+        fromWidth,
+        fromHeight,
+        toX - DGame.camera.x,
+        toY - DGame.camera.y,
+        toWidth,
+        toHeight
+      );
+    },
     circle: function (x, y, radius) {
       DGame.ctx.beginPath();
       DGame.ctx.arc(
@@ -164,8 +187,23 @@ export const DGame = {
     },
   },
 
+  tiled: {
+    getTilePos: function (id, jsonData) {
+      // TODO: dodać wyszukiwanie tileset po nazwie "name":"spritesheet",
+      const columns = jsonData.tilesets[0].columns;
+      const tileWidth = jsonData.tilesets[0].tilewidth;
+      const tileHeight = jsonData.tilesets[0].tileheight;
+
+      const row = Math.floor(id / columns);
+      const column = id - row * columns;
+
+      return { x: column * tileWidth, y: row * tileHeight };
+    },
+  },
+
   clearRect: function () {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = "#898989";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   },
 
   isCircleRectangleCollision: function (

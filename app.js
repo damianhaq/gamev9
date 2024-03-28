@@ -1,5 +1,14 @@
 import { DGame } from "./DGamev2.js";
+import { spriteSheetData } from "./bigSpritev7data.js";
+import jsonData from "./gamev9.json" assert { type: "json" };
+
 DGame.init("canvas", 1600, 800, 2);
+
+const bigSpritev7 = new Image();
+bigSpritev7.src = "bigSpritev7.png";
+
+const tilePos = DGame.tiled.getTilePos(1995, jsonData);
+console.log(tilePos);
 
 const player = {
   position: DGame.vector.create(100, 100),
@@ -78,6 +87,29 @@ function draw() {
   DGame.draw.line(30, 40, 50, 90);
 
   player.draw();
+
+  DGame.draw.image(
+    spriteSheetData.elfM.idle.x,
+    spriteSheetData.elfM.idle.y,
+    spriteSheetData.elfM.idle.w,
+    spriteSheetData.elfM.idle.h,
+    0,
+    0,
+    spriteSheetData.elfM.idle.w,
+    spriteSheetData.elfM.idle.h,
+    bigSpritev7
+  );
+  DGame.draw.image(
+    tilePos.x,
+    tilePos.y,
+    jsonData.tilesets[0].tilewidth,
+    jsonData.tilesets[0].tileheight,
+    0,
+    0,
+    jsonData.tilesets[0].tilewidth,
+    jsonData.tilesets[0].tileheight,
+    bigSpritev7
+  );
 }
 
 requestAnimationFrame(gameLoop);
