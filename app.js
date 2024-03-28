@@ -5,7 +5,7 @@ import jsonData from "./gamev9.json" assert { type: "json" };
 DGame.init("canvas", 1600, 800, 2);
 
 const bigSpritev7 = new Image();
-bigSpritev7.src = "bigSpritev7.png";
+bigSpritev7.src = "./bigSpritev7.png";
 
 const player = {
   position: DGame.vector.create(100, 100),
