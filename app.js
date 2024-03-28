@@ -97,13 +97,15 @@ function draw() {
     bigSpritev7
   );
 
-  DGame.tiled.drawChunk(
-    jsonData.layers[0].chunks[0],
+  DGame.tiled.drawLayer(
+    "background",
+    jsonData.layers,
     jsonData.tilesets[0],
     bigSpritev7
   );
-  DGame.tiled.drawChunk(
-    jsonData.layers[0].chunks[1],
+  DGame.tiled.drawLayer(
+    "chests",
+    jsonData.layers,
     jsonData.tilesets[0],
     bigSpritev7
   );

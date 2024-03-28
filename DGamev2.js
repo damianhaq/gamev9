@@ -236,6 +236,15 @@ export const DGame = {
         }
       }
     },
+
+    drawLayer(layerName, layers, tileset, image) {
+      // TODO: filtrowanie można wykonać tylko raz? Tu się wykonuje co klatke
+      const layer = layers.filter((el) => el.name === layerName)[0];
+
+      for (let i = 0; i < layer.chunks.length; i++) {
+        this.drawChunk(layer.chunks[i], tileset, image);
+      }
+    },
   },
 
   clearRect: function () {
