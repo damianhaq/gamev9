@@ -2,6 +2,7 @@ export const DGame = {
   canvas: null,
   ctx: null,
   scaleFactor: 1,
+  isDebug: true,
 
   mouse: {
     click: false,
@@ -145,18 +146,35 @@ export const DGame = {
       toHeight,
       image
     ) {
-      DGame.ctx.drawImage(
-        image,
-        fromX,
-        fromY,
-        fromWidth,
-        fromHeight,
-        toX - DGame.camera.x,
-        toY - DGame.camera.y,
-        toWidth,
-        toHeight
-      );
+      if (
+        typeof fromX !== "undefined" &&
+        typeof fromY !== "undefined" &&
+        typeof fromWidth !== "undefined" &&
+        typeof fromHeight !== "undefined" &&
+        typeof toX !== "undefined" &&
+        typeof toY !== "undefined" &&
+        typeof toWidth !== "undefined" &&
+        typeof toHeight !== "undefined" &&
+        typeof image !== "undefined"
+      ) {
+        DGame.ctx.drawImage(
+          image,
+          fromX,
+          fromY,
+          fromWidth,
+          fromHeight,
+          toX - DGame.camera.x,
+          toY - DGame.camera.y,
+          toWidth,
+          toHeight
+        );
+      } else {
+        console.log("something is undefined in draw.image func");
+      }
     },
+
+    // anim() {},
+
     circle: function (x, y, radius) {
       DGame.ctx.beginPath();
       DGame.ctx.arc(
@@ -184,6 +202,65 @@ export const DGame = {
       DGame.ctx.moveTo(x - DGame.camera.x, y - DGame.camera.y);
       DGame.ctx.lineTo(tox - DGame.camera.x, toy - DGame.camera.y);
       DGame.ctx.stroke();
+    },
+  },
+
+  sprite: {
+    createCircle: function (x, y, radius) {
+      this.x = x;
+      this.y = y;
+      this.radius = radius;
+
+      return { x: x, y: y, radius: radius };
+    },
+
+    createRect: function (x, y, width, height) {
+      // x and y is center of sprite, like circle !!!!
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+
+      return { x: x, y: y, width: width, height: height };
+    },
+
+    addImage: function (fromX, fromY, fromWidth, fromHeight, img, sprite) {
+      return {
+        ...sprite,
+        image: { fromX, fromY, fromWidth, fromHeight, img: img },
+      };
+    },
+
+    draw: function (sprite) {
+      if (sprite.image) {
+        DGame.draw.image(
+          sprite.image.fromX,
+          sprite.image.fromY,
+          sprite.image.fromWidth,
+          sprite.image.fromHeight,
+          sprite.x - sprite.image.fromWidth / 2,
+          sprite.y - sprite.image.fromHeight / 2,
+          sprite.image.fromWidth,
+          sprite.image.fromHeight,
+          sprite.image.img
+        );
+      }
+      if (DGame.isDebug) {
+        if (sprite.radius) {
+          DGame.draw.circle(sprite.x, sprite.y, sprite.radius);
+          // draw origin
+          DGame.draw.circle(sprite.x, sprite.y, 1);
+        } else {
+          DGame.draw.rect(
+            sprite.x - sprite.width / 2,
+            sprite.y - sprite.height / 2,
+            sprite.width,
+            sprite.height
+          );
+          // draw origin
+          DGame.draw.circle(sprite.x, sprite.y, 1);
+        }
+      }
     },
   },
 
@@ -238,7 +315,6 @@ export const DGame = {
     },
 
     drawLayer(layerName, layers, tileset, image) {
-      // TODO: filtrowanie można wykonać tylko raz? Tu się wykonuje co klatke
       const layer = layers.filter((el) => el.name === layerName)[0];
 
       for (let i = 0; i < layer.chunks.length; i++) {

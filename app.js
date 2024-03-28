@@ -7,6 +7,16 @@ DGame.init("canvas", 1600, 800, 2);
 const bigSpritev7 = new Image();
 bigSpritev7.src = "BigSpritev7.png";
 
+let spriteCircle = DGame.sprite.createCircle(50, -100, 25);
+const { x, y, w, h } = spriteSheetData.orcInMask.idle;
+spriteCircle = DGame.sprite.addImage(x, y, w, h, bigSpritev7, spriteCircle);
+
+let spriteRect = DGame.sprite.createRect(150, -100, 20, 20);
+const { x: sx, y: sy, w: sw, h: sh } = spriteSheetData.skeleton.idle;
+spriteRect = DGame.sprite.addImage(sx, sy, sw, sh, bigSpritev7, spriteRect);
+console.log("spriteCircle", spriteCircle);
+console.log(spriteRect);
+
 const player = {
   position: DGame.vector.create(100, 100),
   // velocity is like "next step"
@@ -14,6 +24,17 @@ const player = {
   acc: DGame.vector.create(0, 0),
 
   draw: function () {
+    DGame.draw.image(
+      spriteSheetData.elfM.idle.x,
+      spriteSheetData.elfM.idle.y,
+      spriteSheetData.elfM.idle.w,
+      spriteSheetData.elfM.idle.h,
+      this.position.x,
+      this.position.y,
+      spriteSheetData.elfM.idle.w,
+      spriteSheetData.elfM.idle.h,
+      bigSpritev7
+    );
     DGame.draw.circle(this.position.x, this.position.y, 10);
 
     DGame.draw.line(
@@ -44,7 +65,7 @@ const player = {
     this.acc = DGame.vector.create(0, 0);
   },
 };
-console.log(player);
+console.log("player", player);
 
 function egdes() {
   if (player.position.y >= 200) {
@@ -70,7 +91,7 @@ function update(deltaTime) {
   player.applyForce(DGame.vector.create(0.01, 0));
   player.update();
 
-  DGame.camera.set(player.position.x, player.position.y);
+  // DGame.camera.set(player.position.x, player.position.y);
 
   egdes();
 }
@@ -82,20 +103,6 @@ function draw() {
   DGame.draw.rect(30, 100, 20, 15);
   DGame.draw.text(100, 100, DGame.math.randomNumber(0, 99));
   DGame.draw.line(30, 40, 50, 90);
-
-  player.draw();
-
-  DGame.draw.image(
-    spriteSheetData.elfM.idle.x,
-    spriteSheetData.elfM.idle.y,
-    spriteSheetData.elfM.idle.w,
-    spriteSheetData.elfM.idle.h,
-    0,
-    0,
-    spriteSheetData.elfM.idle.w,
-    spriteSheetData.elfM.idle.h,
-    bigSpritev7
-  );
 
   DGame.tiled.drawLayer(
     "background",
@@ -109,6 +116,11 @@ function draw() {
     jsonData.tilesets[0],
     bigSpritev7
   );
+  player.draw();
+  // DGame.sprite.draw(testSprite1);
+  // DGame.sprite.draw(testSprite2);
+  DGame.sprite.draw(spriteCircle);
+  DGame.sprite.draw(spriteRect);
 }
 
 requestAnimationFrame(gameLoop);
