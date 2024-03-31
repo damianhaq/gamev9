@@ -10,6 +10,10 @@ export const DGame = {
     y: false,
   },
 
+  keys: {
+    key: [],
+  },
+
   camera: {
     x: 0,
     y: 0,
@@ -45,6 +49,14 @@ export const DGame = {
     this.canvas.addEventListener("mousemove", (ev) => {
       this.mouse.x = Math.round(ev.offsetX / this.scaleFactor);
       this.mouse.y = Math.round(ev.offsetY / this.scaleFactor);
+    });
+
+    this.canvas.addEventListener("keydown", (ev) => {
+      if (!this.keys.key[ev.keyCode]) this.keys.key[ev.keyCode] = true;
+      console.log(ev.keyCode);
+    });
+    this.canvas.addEventListener("keyup", (ev) => {
+      if (this.keys.key[ev.keyCode]) this.keys.key[ev.keyCode] = false;
     });
 
     this.ctx.scale(this.scaleFactor, this.scaleFactor);
