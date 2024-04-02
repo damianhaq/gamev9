@@ -7,9 +7,19 @@ DGame.init("canvas", 1600, 800, 2);
 const bigSpritev7 = new Image();
 bigSpritev7.src = "BigSpritev7.png";
 
-let spriteCircle = DGame.sprite.createCircle(50, -100, 25);
-const { x: ox, y: oy, w: ow, h: oh } = spriteSheetData.orcInMask.idle;
-spriteCircle = DGame.sprite.addImage(ox, oy, ow, oh, bigSpritev7, spriteCircle);
+let spriteOrc = DGame.sprite.createCircle(50, -100, 25);
+
+const {
+  x: ox,
+  y: oy,
+  w: ow,
+  h: oh,
+  frames: of,
+} = spriteSheetData.orcInMask.idle;
+
+spriteOrc = DGame.sprite.addAnim(ox, oy, ow, oh, of, bigSpritev7, spriteOrc);
+
+console.log("sprite Orc", spriteOrc);
 
 let skeletonSprite = DGame.sprite.createRect(150, -100, 20, 20);
 const { x: sx, y: sy, w: sw, h: sh } = spriteSheetData.skeleton.idle;
@@ -31,6 +41,7 @@ const player = {
   draw: function () {
     skeletonSprite.x = this.position.x;
     skeletonSprite.y = this.position.y;
+
     DGame.sprite.draw(skeletonSprite);
 
     DGame.draw.line(
@@ -115,7 +126,7 @@ function update(deltaTime) {
   egdes();
 }
 
-function draw() {
+function draw(deltaTime) {
   DGame.clearRect();
 
   DGame.draw.circle(0, 0, 40);
@@ -138,7 +149,7 @@ function draw() {
   player.draw();
   // DGame.sprite.draw(testSprite1);
   // DGame.sprite.draw(testSprite2);
-  DGame.sprite.draw(spriteCircle);
+  DGame.sprite.draw(spriteOrc, deltaTime);
 }
 
 requestAnimationFrame(gameLoop);

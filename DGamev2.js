@@ -33,13 +33,6 @@ export const DGame = {
     this.canvas.style.border = "1px solid black";
     this.canvas.setAttribute("tabindex", 0);
 
-    // this.canvas.addEventListener("keydown", (ev) => {
-    //   if (!this.keys.key[ev.keyCode]) this.keys.key[ev.keyCode] = true;
-    //   console.log(ev.keyCode);
-    // });
-    // this.canvas.addEventListener("keyup", (ev) => {
-    //   if (this.keys.key[ev.keyCode]) this.keys.key[ev.keyCode] = false;
-    // });
     this.canvas.addEventListener("mousedown", (ev) => {
       this.mouse.click = true;
     });
@@ -243,7 +236,32 @@ export const DGame = {
       };
     },
 
-    draw: function (sprite) {
+    addAnim: function (
+      fromX,
+      fromY,
+      fromWidth,
+      fromHeight,
+      frames,
+      img,
+      sprite
+    ) {
+      return {
+        ...sprite,
+        anim: {
+          fromX,
+          fromY,
+          fromWidth,
+          frames,
+          fromHeight,
+          img,
+          currFrame: 0,
+          frameTime: 100,
+          currFrameTime: 0,
+        },
+      };
+    },
+
+    draw: function (sprite, deltaTime) {
       if (sprite.image) {
         DGame.draw.image(
           sprite.image.fromX,
@@ -256,6 +274,31 @@ export const DGame = {
           sprite.image.fromHeight,
           sprite.image.img
         );
+      } else if (sprite.anim) {
+        DGame.draw.image(
+          sprite.anim.fromX + sprite.anim.fromWidth * sprite.anim.currFrame,
+          sprite.anim.fromY,
+          sprite.anim.fromWidth,
+          sprite.anim.fromHeight,
+          sprite.x - sprite.anim.fromWidth / 2,
+          sprite.y - sprite.anim.fromHeight / 2,
+          sprite.anim.fromWidth,
+          sprite.anim.fromHeight,
+          sprite.anim.img
+        );
+
+        if (sprite.anim.currFrameTime < sprite.anim.frameTime) {
+          sprite.anim.currFrameTime += deltaTime;
+        } else {
+          if (sprite.anim.currFrame < sprite.anim.frames - 1) {
+            sprite.anim.currFrame++;
+            sprite.anim.currFrameTime = 0;
+          } else {
+            sprite.anim.currFrame = 0;
+            sprite.anim.currFrameTime = 0;
+          }
+        }
+        // console.log(sprite.anim.currFrame);
       }
       if (DGame.isDebug) {
         if (sprite.radius) {
