@@ -39,6 +39,19 @@ skeletonSprite = DGame.sprite.addAnim(
   skeletonSprite
 );
 
+let elfSprite = DGame.sprite.createCircle(-30, 0, 16);
+elfSprite = DGame.sprite.addImage(
+  spriteSheetData.elfM.idle.x,
+  spriteSheetData.elfM.idle.y,
+  spriteSheetData.elfM.idle.w,
+  spriteSheetData.elfM.idle.h,
+  bigSpritev7,
+  elfSprite
+);
+elfSprite.image.isFlipX = false;
+
+console.log(elfSprite);
+
 const player = {
   position: DGame.vector.create(100, 100),
   // velocity is like "next step"
@@ -130,11 +143,11 @@ function update(deltaTime) {
   // player.applyForce(DGame.vector.create(0.01, 0));
   player.update();
 
-  // DGame.camera.set(player.position.x, player.position.y);
+  DGame.camera.set(player.position.x, player.position.y);
 
   egdes();
 }
-
+let rotate = 0;
 function draw(deltaTime) {
   DGame.clearRect();
 
@@ -159,6 +172,27 @@ function draw(deltaTime) {
   // DGame.sprite.draw(testSprite1);
   // DGame.sprite.draw(testSprite2);
   DGame.sprite.draw(spriteOrc, deltaTime);
+
+  DGame.draw.drawImagePartWithTransform(
+    bigSpritev7,
+    spriteSheetData.purpleKnight.idle.x,
+    spriteSheetData.purpleKnight.idle.y,
+    spriteSheetData.purpleKnight.idle.w,
+    spriteSheetData.purpleKnight.idle.h,
+    10 + rotate / 10,
+    50 - rotate / 10,
+    spriteSheetData.purpleKnight.idle.w,
+    spriteSheetData.purpleKnight.idle.h,
+    false,
+    false,
+    0 - rotate,
+    10,
+    0
+  );
+
+  DGame.sprite.draw(elfSprite, deltaTime);
+  rotate++;
+  if (rotate > 360) rotate = 0;
 }
 
 requestAnimationFrame(gameLoop);

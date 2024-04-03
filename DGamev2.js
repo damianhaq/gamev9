@@ -46,7 +46,7 @@ export const DGame = {
 
     this.canvas.addEventListener("keydown", (ev) => {
       if (!this.keys.key[ev.keyCode]) this.keys.key[ev.keyCode] = true;
-      console.log(ev.keyCode);
+      // console.log(ev.keyCode);
     });
     this.canvas.addEventListener("keyup", (ev) => {
       if (this.keys.key[ev.keyCode]) this.keys.key[ev.keyCode] = false;
@@ -140,6 +140,63 @@ export const DGame = {
   },
 
   draw: {
+    drawImagePartWithTransform: function (
+      image,
+      sx,
+      sy,
+      sWidth,
+      sHeight,
+      dx,
+      dy,
+      dWidth,
+      dHeight,
+      isFlipX,
+      isFlipY,
+      rotationDeg,
+      pivotX,
+      pivotY
+    ) {
+      // Zapamiętaj obecne ustawienia transformacji
+      DGame.ctx.save();
+
+      // Ustaw pivot jako punkt obracania
+      DGame.ctx.translate(
+        pivotX + dx + sWidth / 2 - DGame.camera.x,
+        pivotY + dy + sHeight / 2 - DGame.camera.y
+      );
+
+      // Obróć obraz o podaną ilość stopni
+      DGame.ctx.rotate((rotationDeg * Math.PI) / 180);
+
+      // Odbij obraz w osi X, jeśli wymagane
+      if (isFlipX) DGame.ctx.scale(-1, 1);
+
+      // Odbij obraz w osi Y, jeśli wymagane
+      if (isFlipY) DGame.ctx.scale(1, -1);
+
+      // Przesuń punkt obrotu z powrotem do początkowego punktu
+      DGame.ctx.translate(
+        -(pivotX + dx + sWidth / 2),
+        -(pivotY + dy + sHeight / 2)
+      );
+
+      // Narysuj konkretną część obrazka na canvasie
+      DGame.ctx.drawImage(
+        image,
+        sx,
+        sy,
+        sWidth,
+        sHeight,
+        dx,
+        dy,
+        dWidth,
+        dHeight
+      );
+
+      // Przywróć poprzednie ustawienia transformacji
+      DGame.ctx.restore();
+    },
+
     image: function (
       fromX,
       fromY,
@@ -152,39 +209,25 @@ export const DGame = {
       image,
       isFlipx = false
     ) {
-      if (
-        typeof fromX !== "undefined" &&
-        typeof fromY !== "undefined" &&
-        typeof fromWidth !== "undefined" &&
-        typeof fromHeight !== "undefined" &&
-        typeof toX !== "undefined" &&
-        typeof toY !== "undefined" &&
-        typeof toWidth !== "undefined" &&
-        typeof toHeight !== "undefined" &&
-        typeof isFlipx !== "undefined"
-      ) {
-        DGame.ctx.save();
-        // DGame.ctx.translate(DGame.canvas.width / 2, 0);
-        DGame.ctx.scale(isFlipx ? -1 : 1, 1);
+      DGame.ctx.save();
+      // DGame.ctx.translate(DGame.canvas.width / 2, 0);
+      DGame.ctx.scale(isFlipx ? -1 : 1, 1);
 
-        DGame.ctx.drawImage(
-          image,
-          fromX,
-          fromY,
-          fromWidth,
-          fromHeight,
-          isFlipx
-            ? -toX - DGame.canvas.width / 2 - toWidth - DGame.camera.x
-            : toX - DGame.camera.x,
-          toY - DGame.camera.y,
-          toWidth,
-          toHeight
-        );
+      DGame.ctx.drawImage(
+        image,
+        fromX,
+        fromY,
+        fromWidth,
+        fromHeight,
+        isFlipx
+          ? -toX - DGame.canvas.width / 2 - toWidth - DGame.camera.x
+          : toX - DGame.camera.x,
+        toY - DGame.camera.y,
+        toWidth,
+        toHeight
+      );
 
-        DGame.ctx.restore();
-      } else {
-        console.log("something is undefined in draw.image func");
-      }
+      DGame.ctx.restore();
     },
 
     // anim() {},
@@ -248,6 +291,10 @@ export const DGame = {
           fromHeight,
           img: img,
           isFlipX: false,
+          isFlipY: false,
+          rotateDeg: 0,
+          rotatePointX: 0,
+          rotatePointY: 0,
         },
       };
     },
@@ -274,6 +321,10 @@ export const DGame = {
           frameTime: 100,
           currFrameTime: 0,
           isFlipX: false,
+          isFlipY: false,
+          rotateDeg: 0,
+          rotatePointX: 0,
+          rotatePointY: 0,
         },
       };
     },
@@ -292,8 +343,37 @@ export const DGame = {
           sprite.image.img,
           sprite.image.isFlipX
         );
+        DGame.draw.drawImagePartWithTransform(
+          sprite.image.img,
+          sprite.image.fromX,
+          sprite.image.fromY,
+          sprite.image.fromWidth,
+          sprite.image.fromHeight,
+          sprite.x - sprite.image.fromWidth / 2,
+          sprite.y - sprite.image.fromHeight / 2,
+          sprite.image.fromWidth,
+          sprite.image.fromHeight,
+          sprite.image.isFlipX,
+          sprite.image.isFlipY,
+          sprite.image.rorateDeg,
+          sprite.image.rotatePointX,
+          sprite.image.rotatePointY
+        );
       } else if (sprite.anim) {
-        DGame.draw.image(
+        // DGame.draw.image(
+        //   sprite.anim.fromX + sprite.anim.fromWidth * sprite.anim.currFrame,
+        //   sprite.anim.fromY,
+        //   sprite.anim.fromWidth,
+        //   sprite.anim.fromHeight,
+        //   sprite.x - sprite.anim.fromWidth / 2,
+        //   sprite.y - sprite.anim.fromHeight / 2,
+        //   sprite.anim.fromWidth,
+        //   sprite.anim.fromHeight,
+        //   sprite.anim.img,
+        //   sprite.anim.isFlipX
+        // );
+        DGame.draw.drawImagePartWithTransform(
+          sprite.anim.img,
           sprite.anim.fromX + sprite.anim.fromWidth * sprite.anim.currFrame,
           sprite.anim.fromY,
           sprite.anim.fromWidth,
@@ -302,8 +382,11 @@ export const DGame = {
           sprite.y - sprite.anim.fromHeight / 2,
           sprite.anim.fromWidth,
           sprite.anim.fromHeight,
-          sprite.anim.img,
-          sprite.anim.isFlipX
+          sprite.anim.isFlipX,
+          sprite.anim.isFlipY,
+          sprite.anim.rorateDeg,
+          sprite.anim.rotatePointX,
+          sprite.anim.rotatePointY
         );
 
         if (sprite.anim.currFrameTime < sprite.anim.frameTime) {
@@ -373,7 +456,19 @@ export const DGame = {
             tileset.tileheight
           );
 
-          DGame.draw.image(
+          // DGame.draw.image(
+          //   tilePos.x,
+          //   tilePos.y,
+          //   tileset.tilewidth,
+          //   tileset.tileheight,
+          //   0 + chunkX + column * tileset.tilewidth,
+          //   0 + chunkY + row * tileset.tileheight,
+          //   tileset.tilewidth,
+          //   tileset.tileheight,
+          //   image
+          // );
+          DGame.draw.drawImagePartWithTransform(
+            image,
             tilePos.x,
             tilePos.y,
             tileset.tilewidth,
@@ -382,7 +477,11 @@ export const DGame = {
             0 + chunkY + row * tileset.tileheight,
             tileset.tilewidth,
             tileset.tileheight,
-            image
+            false,
+            false,
+            0,
+            0,
+            0
           );
         }
       }
