@@ -149,7 +149,8 @@ export const DGame = {
       toY,
       toWidth,
       toHeight,
-      image
+      image,
+      isFlipx = false
     ) {
       if (
         typeof fromX !== "undefined" &&
@@ -160,19 +161,27 @@ export const DGame = {
         typeof toY !== "undefined" &&
         typeof toWidth !== "undefined" &&
         typeof toHeight !== "undefined" &&
-        typeof image !== "undefined"
+        typeof isFlipx !== "undefined"
       ) {
+        DGame.ctx.save();
+        // DGame.ctx.translate(DGame.canvas.width / 2, 0);
+        DGame.ctx.scale(isFlipx ? -1 : 1, 1);
+
         DGame.ctx.drawImage(
           image,
           fromX,
           fromY,
           fromWidth,
           fromHeight,
-          toX - DGame.camera.x,
+          isFlipx
+            ? -toX - DGame.canvas.width / 2 - toWidth - DGame.camera.x
+            : toX - DGame.camera.x,
           toY - DGame.camera.y,
           toWidth,
           toHeight
         );
+
+        DGame.ctx.restore();
       } else {
         console.log("something is undefined in draw.image func");
       }
@@ -232,7 +241,14 @@ export const DGame = {
     addImage: function (fromX, fromY, fromWidth, fromHeight, img, sprite) {
       return {
         ...sprite,
-        image: { fromX, fromY, fromWidth, fromHeight, img: img },
+        image: {
+          fromX,
+          fromY,
+          fromWidth,
+          fromHeight,
+          img: img,
+          isFlipX: false,
+        },
       };
     },
 
@@ -257,6 +273,7 @@ export const DGame = {
           currFrame: 0,
           frameTime: 100,
           currFrameTime: 0,
+          isFlipX: false,
         },
       };
     },
@@ -272,7 +289,8 @@ export const DGame = {
           sprite.y - sprite.image.fromHeight / 2,
           sprite.image.fromWidth,
           sprite.image.fromHeight,
-          sprite.image.img
+          sprite.image.img,
+          sprite.image.isFlipX
         );
       } else if (sprite.anim) {
         DGame.draw.image(
@@ -284,7 +302,8 @@ export const DGame = {
           sprite.y - sprite.anim.fromHeight / 2,
           sprite.anim.fromWidth,
           sprite.anim.fromHeight,
-          sprite.anim.img
+          sprite.anim.img,
+          sprite.anim.isFlipX
         );
 
         if (sprite.anim.currFrameTime < sprite.anim.frameTime) {

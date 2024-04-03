@@ -22,12 +22,19 @@ spriteOrc = DGame.sprite.addAnim(ox, oy, ow, oh, of, bigSpritev7, spriteOrc);
 console.log("sprite Orc", spriteOrc);
 
 let skeletonSprite = DGame.sprite.createRect(150, -100, 20, 20);
-const { x: sx, y: sy, w: sw, h: sh } = spriteSheetData.skeleton.idle;
-skeletonSprite = DGame.sprite.addImage(
+const {
+  x: sx,
+  y: sy,
+  w: sw,
+  h: sh,
+  frames: sf,
+} = spriteSheetData.skeleton.idle;
+skeletonSprite = DGame.sprite.addAnim(
   sx,
   sy,
   sw,
   sh,
+  sf,
   bigSpritev7,
   skeletonSprite
 );
@@ -38,11 +45,11 @@ const player = {
   velocity: DGame.vector.create(0, 0),
   acc: DGame.vector.create(0, 0),
 
-  draw: function () {
+  draw: function (deltaTime) {
     skeletonSprite.x = this.position.x;
     skeletonSprite.y = this.position.y;
 
-    DGame.sprite.draw(skeletonSprite);
+    DGame.sprite.draw(skeletonSprite, deltaTime);
 
     DGame.draw.line(
       this.position.x,
@@ -79,8 +86,10 @@ const player = {
     let vector = DGame.vector.create(0, 0);
     if (DGame.keys.key[65]) {
       vector.x = -1;
+      skeletonSprite.anim.isFlipX = true;
     } else if (DGame.keys.key[68]) {
       vector.x = 1;
+      skeletonSprite.anim.isFlipX = false;
     }
     if (DGame.keys.key[87]) {
       vector.y = -1;
@@ -146,7 +155,7 @@ function draw(deltaTime) {
     jsonData.tilesets[0],
     bigSpritev7
   );
-  player.draw();
+  player.draw(deltaTime);
   // DGame.sprite.draw(testSprite1);
   // DGame.sprite.draw(testSprite2);
   DGame.sprite.draw(spriteOrc, deltaTime);
