@@ -436,6 +436,12 @@ export const DGame = {
       return { x: column * tilesetsTileWidth, y: row * tilkesetsTileHeight };
     },
 
+    get2dPosFrom1dArray: function (index, columns) {
+      const x = index % columns;
+      const y = Math.floor(index / columns);
+      return { x, y };
+    },
+
     drawChunk: function (chunk, tileset, image) {
       // this function draw chunk in correct position => chunk.x and chunk.y,
       // so you dont have to specify where to draw this
@@ -493,6 +499,24 @@ export const DGame = {
       for (let i = 0; i < layer.chunks.length; i++) {
         this.drawChunk(layer.chunks[i], tileset, image);
       }
+    },
+
+    getChunkIndex: function (myX, myY, layerIndex, jsonData) {
+      const tileX = Math.floor(myX / 16);
+      const tileY = Math.floor(myY / 16);
+
+      // TODO: on przeszukuje pierwszy layer, jeśli był by mniejszy (nie wiem czy to możliwe) to zwróci błędny chunk
+      // TODO: 16 jest hardcoded a nie powinno
+      const index = jsonData.layers[layerIndex].chunks.findIndex(
+        (el) =>
+          tileX >= el.x &&
+          tileX <= el.x + el.width &&
+          tileY >= el.y &&
+          tileY <= el.y + el.height
+      );
+
+      return index;
+      // console.log(index);
     },
   },
 
