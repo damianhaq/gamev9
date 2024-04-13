@@ -1,4 +1,5 @@
 import { DGame } from "./DGamev2.js";
+import { drawImagePartWithTransform } from "./DGamev3.js";
 import { spriteSheetData } from "./bigSpritev7data.js";
 import jsonData from "./gamev9.json" assert { type: "json" };
 
@@ -97,7 +98,10 @@ const player = {
 
   movement: function () {
     let vector = DGame.vector.create(0, 0);
-    if (DGame.keys.key[65]) {
+    if (
+      DGame.keys.key[65]
+      // DGame.physics.isAABBCollision(this.position.x, this.position.y, 16,16,)
+    ) {
       vector.x = -1;
       skeletonSprite.anim.isFlipX = true;
     } else if (DGame.keys.key[68]) {
@@ -151,11 +155,6 @@ let rotate = 0;
 function draw(deltaTime) {
   DGame.clearRect();
 
-  DGame.draw.circle(0, 0, 40);
-  DGame.draw.rect(30, 100, 20, 15);
-  DGame.draw.text(100, 100, DGame.math.randomNumber(0, 99));
-  DGame.draw.line(30, 40, 50, 90);
-
   DGame.tiled.drawLayer(
     "background",
     jsonData.layers,
@@ -179,23 +178,6 @@ function draw(deltaTime) {
   // DGame.sprite.draw(testSprite2);
   DGame.sprite.draw(spriteOrc, deltaTime);
 
-  // DGame.draw.drawImagePartWithTransform(
-  //   bigSpritev7,
-  //   spriteSheetData.purpleKnight.idle.x,
-  //   spriteSheetData.purpleKnight.idle.y,
-  //   spriteSheetData.purpleKnight.idle.w,
-  //   spriteSheetData.purpleKnight.idle.h,
-  //   10 + rotate / 10,
-  //   50 - rotate / 10,
-  //   spriteSheetData.purpleKnight.idle.w,
-  //   spriteSheetData.purpleKnight.idle.h,
-  //   false,
-  //   false,
-  //   0 - rotate,
-  //   10,
-  //   0
-  // );
-
   DGame.sprite.draw(elfSprite, deltaTime);
   DGame.tiled.drawLayer(
     "foreground",
@@ -204,6 +186,31 @@ function draw(deltaTime) {
     bigSpritev7
   );
 
+  // test
+  drawImagePartWithTransform(
+    bigSpritev7,
+    spriteSheetData.purpleKnight.idle.x,
+    spriteSheetData.purpleKnight.idle.y,
+    spriteSheetData.purpleKnight.idle.w,
+    spriteSheetData.purpleKnight.idle.h,
+    10,
+    20,
+    spriteSheetData.purpleKnight.idle.w,
+    spriteSheetData.purpleKnight.idle.h,
+    false,
+    false,
+    rotate,
+    0,
+    0,
+    DGame.ctx,
+    DGame.camera.x,
+    DGame.camera.y,
+    true
+  );
+  rotate++;
+  if (rotate > 360) rotate = 0;
+
+  // collision WIP
   const chunkIndex = DGame.tiled.getChunkIndex(
     player.position.x,
     player.position.y,

@@ -525,30 +525,53 @@ export const DGame = {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   },
 
-  isCircleRectangleCollision: function (
-    circleX,
-    circleY,
-    circleRadius,
-    rectX,
-    rectY,
-    rectWidth,
-    rectHeight
-  ) {
-    // Find the closest point on the rectangle
-    let closestX = Math.max(rectX, Math.min(circleX, rectX + rectWidth));
-    let closestY = Math.max(rectY, Math.min(circleY, rectY + rectHeight));
+  physics: {
+    isCircleRectangleCollision: function (
+      circleX,
+      circleY,
+      circleRadius,
+      rectX,
+      rectY,
+      rectWidth,
+      rectHeight
+    ) {
+      // Find the closest point on the rectangle
+      let closestX = Math.max(rectX, Math.min(circleX, rectX + rectWidth));
+      let closestY = Math.max(rectY, Math.min(circleY, rectY + rectHeight));
 
-    // this.drawLine(circleX, circleY, closestX, closestY);
+      // this.drawLine(circleX, circleY, closestX, closestY);
 
-    // Calculate the distance between the center of the circle and the closest point on the rectangle
-    let distanceX = circleX - closestX;
-    let distanceY = circleY - closestY;
+      // Calculate the distance between the center of the circle and the closest point on the rectangle
+      let distanceX = circleX - closestX;
+      let distanceY = circleY - closestY;
 
-    // Check if the distance is less than the circle's radius (collision occurs)
-    return (
-      distanceX * distanceX + distanceY * distanceY <
-      circleRadius * circleRadius
-    );
+      // Check if the distance is less than the circle's radius (collision occurs)
+      return (
+        distanceX * distanceX + distanceY * distanceY <
+        circleRadius * circleRadius
+      );
+    },
+    isAABBCollision: function (
+      rectX,
+      rectY,
+      rectWidth,
+      rectHeight,
+      rect2X,
+      rect2Y,
+      rect2Width,
+      rect2Height
+    ) {
+      // Sprawdź, czy prostokąty nachodzą na siebie wzdłuż osi X
+      let xOverlap =
+        rectX + rectWidth >= rect2X && rect2X + rect2Width >= rectX;
+
+      // Sprawdź, czy prostokąty nachodzą na siebie wzdłuż osi Y
+      let yOverlap =
+        rectY + rectHeight >= rect2Y && rect2Y + rect2Height >= rectY;
+
+      // Jeśli istnieje nakładanie się wzdłuż obu osi, to znaczy, że występuje kolizja
+      return xOverlap && yOverlap;
+    },
   },
 
   math: {
