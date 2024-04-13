@@ -1,5 +1,5 @@
 import { DGame } from "./DGamev2.js";
-import { drawImagePartWithTransform } from "./DGamev3.js";
+import { Sprite, drawImagePartWithTransform } from "./DGamev3.js";
 import { spriteSheetData } from "./bigSpritev7data.js";
 import jsonData from "./gamev9.json" assert { type: "json" };
 
@@ -7,6 +7,33 @@ DGame.init("canvas", 1600, 800, 2);
 
 const bigSpritev7 = new Image();
 bigSpritev7.src = "BigSpritev7.png";
+
+const newPlayer = new Sprite(10, 10, 16, 22, DGame.ctx);
+// newPlayer.addTexture(
+//   spriteSheetData.purpleKnight.idle.x,
+//   spriteSheetData.purpleKnight.idle.y,
+//   spriteSheetData.purpleKnight.idle.w,
+//   spriteSheetData.purpleKnight.idle.h,
+//   bigSpritev7
+// );
+newPlayer.addAnim(
+  "idle",
+  spriteSheetData.purpleKnight.idle.x,
+  spriteSheetData.purpleKnight.idle.y,
+  spriteSheetData.purpleKnight.idle.w,
+  spriteSheetData.purpleKnight.idle.h,
+  spriteSheetData.purpleKnight.idle.frames,
+  bigSpritev7
+);
+newPlayer.addAnim(
+  "run",
+  spriteSheetData.purpleKnight.run.x,
+  spriteSheetData.purpleKnight.run.y,
+  spriteSheetData.purpleKnight.run.w,
+  spriteSheetData.purpleKnight.run.h,
+  spriteSheetData.purpleKnight.run.frames,
+  bigSpritev7
+);
 
 let spriteOrc = DGame.sprite.createCircle(50, -100, 25);
 
@@ -20,7 +47,7 @@ const {
 
 spriteOrc = DGame.sprite.addAnim(ox, oy, ow, oh, of, bigSpritev7, spriteOrc);
 
-console.log("sprite Orc", spriteOrc);
+// console.log("sprite Orc", spriteOrc);
 
 let skeletonSprite = DGame.sprite.createRect(150, -100, 20, 20);
 const {
@@ -51,7 +78,7 @@ elfSprite = DGame.sprite.addImage(
 );
 elfSprite.image.isFlipX = false;
 
-console.log(elfSprite);
+// console.log(elfSprite);
 
 const player = {
   position: DGame.vector.create(100, 100),
@@ -122,7 +149,7 @@ const player = {
   },
 };
 
-console.log("player", player);
+// console.log("player", player);
 
 function egdes() {
   if (player.position.y >= 200) {
@@ -150,8 +177,8 @@ function update(deltaTime) {
 
   DGame.camera.set(player.position.x, player.position.y);
 }
-let rotate = 0;
 
+let rotate = 0;
 function draw(deltaTime) {
   DGame.clearRect();
 
@@ -162,13 +189,13 @@ function draw(deltaTime) {
     bigSpritev7
   );
   DGame.tiled.drawLayer(
-    "chests",
+    "walls",
     jsonData.layers,
     jsonData.tilesets[0],
     bigSpritev7
   );
   DGame.tiled.drawLayer(
-    "walls",
+    "chests",
     jsonData.layers,
     jsonData.tilesets[0],
     bigSpritev7
@@ -187,26 +214,10 @@ function draw(deltaTime) {
   );
 
   // test
-  drawImagePartWithTransform(
-    bigSpritev7,
-    spriteSheetData.purpleKnight.idle.x,
-    spriteSheetData.purpleKnight.idle.y,
-    spriteSheetData.purpleKnight.idle.w,
-    spriteSheetData.purpleKnight.idle.h,
-    10,
-    20,
-    spriteSheetData.purpleKnight.idle.w,
-    spriteSheetData.purpleKnight.idle.h,
-    false,
-    false,
-    rotate,
-    0,
-    0,
-    DGame.ctx,
-    DGame.camera.x,
-    DGame.camera.y,
-    true
-  );
+
+  // newPlayer.x = rotate;
+  newPlayer.draw(deltaTime, "run");
+  // newPlayer.anim.rotateDeg = rotate;
   rotate++;
   if (rotate > 360) rotate = 0;
 
@@ -222,7 +233,7 @@ function draw(deltaTime) {
     currentChunkIndex = chunkIndex;
     collidable.length = 0;
     addTilesToCollidable(2, currentChunkIndex);
-    console.log("collidable", collidable);
+    // console.log("collidable", collidable);
   }
 
   // draw collidable

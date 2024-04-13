@@ -57,7 +57,7 @@ export const DGame = {
 
     DGame.camera.set(0, 0);
 
-    console.log(this);
+    // console.log(this);
   },
 
   vector: {
