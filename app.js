@@ -25,6 +25,7 @@ class Player extends Sprite {
   update() {
     let normVel = new Vector(0, 0);
     let isMoving = false;
+
     if (game.keys.key[65]) {
       normVel.x = -1;
       this.isFlipX = true;
@@ -42,13 +43,29 @@ class Player extends Sprite {
       isMoving = true;
     }
 
-    // TODO: this.vel nie jest używane a powinno !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     normVel.normalize();
-    this.x += normVel.x;
-    this.y += normVel.y;
+    // check if next frame position is inside the map boundaries
+    const nextX = this.getNextFramePos(this.x, this.y, normVel).x;
+    const nextY = this.getNextFramePos(this.x, this.y, normVel).y;
+
+    if (tiled.isInside(nextX, nextY, this.width, this.height)) {
+      // dodaj ttymczasowy wektor do vel
+      this.vel.add(normVel);
+    }
+
+    // add vel to pos
+    this.x += this.vel.x;
+    this.y += this.vel.y;
 
     // reset vel to 0 if no key is pressed
+    this.vel.set(0, 0);
+
     this.setCurrentAnim(isMoving ? "run" : "idle");
+  }
+
+  // // calculate next frame position
+  getNextFramePos(posX, posY, vel) {
+    return { x: posX + vel.x, y: posY + vel.y };
   }
 }
 

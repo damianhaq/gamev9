@@ -253,7 +253,34 @@ export class Tiled {
     this.addTilesToCollidable("walls");
   }
 
-  // add tiles from one layer to collidable
+  getWorldBounds() {
+    return {
+      x: 0,
+      y: 0,
+      width: this.mapSize.width,
+      height: this.mapSize.height,
+    };
+  }
+
+  /**
+   * Checks if the given object is fully inside the map boundaries.
+   *
+   * @param {number} x - The x-coordinate of the object's top-left corner.
+   * @param {number} y - The y-coordinate of the object's top-left corner.
+   * @param {number} width - The width of the object.
+   * @param {number} height - The height of the object.
+   * @return {boolean} Whether the object is fully inside the map boundaries.
+   */
+  isInside(x, y, width, height) {
+    const worldBounds = this.getWorldBounds();
+    return (
+      x >= worldBounds.x &&
+      x + width <= worldBounds.x + worldBounds.width &&
+      y >= worldBounds.y &&
+      y + height <= worldBounds.y + worldBounds.height
+    );
+  }
+
   addTilesToCollidable(layerName) {
     const layer = this.jsonData.layers.filter((el) => el.name === layerName)[0];
 
@@ -422,109 +449,194 @@ export class Tiled {
 // Vector
 
 export class Vector {
+  /**
+   * @param {number} x The x-coordinate.
+   * @param {number} y The y-coordinate.
+   */
   constructor(x, y) {
     this.x = x;
     this.y = y;
   }
 
+  /**
+   * @param {number} x The new x-coordinate.
+   * @param {number} y The new y-coordinate.
+   */
   set(x, y) {
     this.x = x;
     this.y = y;
   }
 
-  add(x, y) {
-    this.x += x;
-    this.y += y;
+  /**
+   * @param {Vector} vector The vector to add to this vector.
+   */
+  add(vector) {
+    this.x += vector.x;
+    this.y += vector.y;
   }
 
+  /**
+   * @param {number} x The value to subtract from the x-coordinate.
+   * @param {number} y The value to subtract from the y-coordinate.
+   */
   sub(x, y) {
     this.x -= x;
     this.y -= y;
   }
 
+  /**
+   * @param {number} x The value to multiply the x-coordinate by.
+   * @param {number} y The value to multiply the y-coordinate by.
+   */
   mul(x, y) {
     this.x *= x;
     this.y *= y;
   }
 
+  /**
+   * @param {number} x The value to divide the x-coordinate by.
+   * @param {number} y The value to divide the y-coordinate by.
+   */
   div(x, y) {
     this.x /= x;
     this.y /= y;
   }
 
+  /**
+   * @returns {number} The magnitude of the vector.
+   */
   getLen() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
+  /**
+   * Normalizes the vector if it's not zero-length.
+   */
   normalize() {
     const len = this.getLen();
     if (len !== 0) {
       this.x /= len;
       this.y /= len;
+    } else {
+      // console.log("Tried to normalize a zero-length vector.");
     }
   }
 
+  /**
+   * @param {number} max The maximum magnitude.
+   */
   limit(max) {
     if (this.getLen() > max) {
       this.normalize();
       this.mul(max);
+    } else if (max === undefined) {
+      console.log("No max value provided.");
     }
   }
 
+  /**
+   * @returns {Vector} A new vector with the same coordinates.
+   */
   getClone() {
     return new Vector(this.x, this.y);
   }
 
+  /**
+   * @param {number} mag The new magnitude.
+   */
   setMag(mag) {
     this.normalize();
     this.mul(mag);
   }
 
+  /**
+   * @param {Vector} v2 The other vector.
+   * @returns {number} The distance between this vector and the other vector.
+   */
   getDistance(v2) {
     const dx = this.x - v2.x;
     const dy = this.y - v2.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  /**
+   * @returns {Vector} A new vector with the same coordinates.
+   */
   getCopy() {
     return new Vector(this.x, this.y);
   }
 
+  /**
+   * @returns {number} The magnitude of the vector.
+   */
   getMag() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
+  /**
+   * @returns {number} The angle of the vector in radians.
+   */
   getHeading() {
     return Math.atan2(this.y, this.x);
   }
 
+  /**
+   * @param {number} angle The new angle in degrees.
+   */
   setAngleDeg(angle) {
-    const rad = (angle * Math.PI) / 180;
-    this.set(Math.cos(rad), Math.sin(rad));
+    if (angle !== undefined) {
+      const rad = (angle * Math.PI) / 180;
+      this.set(Math.cos(rad), Math.sin(rad));
+    } else {
+      console.log("No angle value provided.");
+    }
   }
 
+  /**
+   * @param {number} angle The new angle in radians.
+   */
   setAngleRad(angle) {
-    const rad = angle;
-    this.set(Math.cos(rad), Math.sin(rad));
+    if (angle !== undefined) {
+      const rad = angle;
+      this.set(Math.cos(rad), Math.sin(rad));
+    } else {
+      console.log("No angle value provided.");
+    }
   }
 
+  /**
+   * @returns {number} The angle of the vector in degrees.
+   */
   getAngleDeg() {
     const rad = Math.atan2(this.y, this.x);
     return (rad * 180) / Math.PI;
   }
 
+  /**
+   * @returns {number} The angle of the vector in radians.
+   */
   getAngleRad() {
     const rad = Math.atan2(this.y, this.x);
     return rad;
   }
 
+  /**
+   * @param {number} angle The angle in degrees to rotate by.
+   */
   rotate(angle) {
-    const rad = (angle * Math.PI) / 180;
-    const x = this.x * Math.cos(rad) - this.y * Math.sin(rad);
-    const y = this.x * Math.sin(rad) + this.y * Math.cos(rad);
-    this.set(x, y);
+    if (angle !== undefined) {
+      const rad = (angle * Math.PI) / 180;
+      const x = this.x * Math.cos(rad) - this.y * Math.sin(rad);
+      const y = this.x * Math.sin(rad) + this.y * Math.cos(rad);
+      this.set(x, y);
+    } else {
+      console.log("No angle value provided.");
+    }
   }
 
+  /**
+   * @returns {Vector} A new unit vector.
+   */
   static randomUnitVector() {
     const random1 = Math.random() * 2 - 1;
     const random2 = Math.random() * 2 - 1;
