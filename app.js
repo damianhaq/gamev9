@@ -44,13 +44,18 @@ class Player extends Sprite {
     }
 
     normVel.normalize();
+    // TODO: dodaj funkcjonalność ślizgania się !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // check if next frame position is inside the map boundaries
     const nextX = this.getNextFramePos(this.x, this.y, normVel).x;
     const nextY = this.getNextFramePos(this.x, this.y, normVel).y;
 
-    if (tiled.isInside(nextX, nextY, this.width, this.height)) {
+    if (
+      tiled.isInside(nextX, nextY, this.width, this.height) &&
+      !this.isCollisionsWithCollidable(tiled.collidable, nextX, nextY)
+    ) {
       // dodaj ttymczasowy wektor do vel
       this.vel.add(normVel);
+      // collisions
     }
 
     // add vel to pos
@@ -69,7 +74,7 @@ class Player extends Sprite {
   }
 }
 
-const newPlayer = new Player(10, 10, 16, 22, game);
+const newPlayer = new Player(50, 50, 16, 22, game);
 
 newPlayer.addAnim(
   "idle",

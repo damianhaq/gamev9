@@ -95,6 +95,22 @@ export class Sprite {
     this.viewType = "unset"; // unset, texture, anim
   }
 
+  // check collisions with tiles in collidable array
+  isCollisionsWithCollidable(collidable, x = this.x, y = this.y) {
+    for (let i = 0; i < collidable.length; i++) {
+      if (
+        x < collidable[i].x + collidable[i].width &&
+        x + this.width > collidable[i].x &&
+        y < collidable[i].y + collidable[i].height &&
+        this.height + y > collidable[i].y
+      ) {
+        console.log("collision");
+        return true;
+      }
+    }
+    return false;
+  }
+
   addTexture(fromX, fromY, fromWidth, fromHeight, image) {
     this.viewType = "texture";
     this.texture = {
@@ -291,6 +307,8 @@ export class Tiled {
           this.collidable.push({
             x: pos.x * 16 + chunk.x * 16,
             y: pos.y * 16 + chunk.y * 16,
+            width: 16,
+            height: 16,
           });
         }
       });
