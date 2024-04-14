@@ -216,27 +216,117 @@ export class Sprite {
         this.game.ctx,
         0,
         0,
-        true
+        this.game.isDebug
       );
     }
     // hitbox
-    this.game.ctx.beginPath();
-    this.game.ctx.rect(
-      this.x - this.game.camera.x,
-      this.y - this.game.camera.y,
-      this.width,
-      this.height
-    );
-    this.game.ctx.stroke();
-
-    // console.log(this.x, this.y);
+    if (this.game.isDebug) {
+      drawRectOnMap(
+        this.x,
+        this.y,
+        this.width,
+        this.height,
+        this.game.ctx,
+        this.game.camera
+      );
+    }
   }
 }
 
 export class Tiled {
-  constructor(game) {
+  constructor(game, jsonData, image) {
     this.game = game;
+    this.jsonData = jsonData;
+    this.image = image;
+
+    this.mapSize = null;
+
+    this.collidable = [];
+    this.preload();
   }
+
+  preload() {
+    // get world bounds firstly
+    this.mapSize = this.getMapSize();
+
+    // add tiles to collidable
+    this.addTilesToCollidable("walls");
+  }
+
+  // add tiles from one layer to collidable
+  addTilesToCollidable(layerName) {
+    const layer = this.jsonData.layers.filter((el) => el.name === layerName)[0];
+
+    layer.chunks.forEach((chunk) => {
+      chunk.data.forEach((el, index) => {
+        if (el !== 0) {
+          const pos = this.get2dPosFrom1dArray(index, 16);
+          this.collidable.push({
+            x: pos.x * 16 + chunk.x * 16,
+            y: pos.y * 16 + chunk.y * 16,
+          });
+        }
+      });
+    });
+  }
+
+  drawDebug() {
+    if (!this.game.isDebug) return;
+
+    // draw world bounds
+    drawRectOnMap(
+      0,
+      0,
+      this.mapSize.width,
+      this.mapSize.height,
+      this.game.ctx,
+      this.game.camera
+    );
+
+    // draw collidable
+    this.collidable.forEach((el) =>
+      drawRectOnMap(el.x, el.y, 16, 16, this.game.ctx, this.game.camera)
+    );
+  }
+
+  getMapSize() {
+    // Pobiera rozmiar mapy na podstawie ostatniego chunka w każdym warstwie.
+    let width = 0;
+    let height = 0;
+
+    this.jsonData.layers.forEach((layer) => {
+      // sprawdza ostatni chunk w każdej warstwie i ten najwiekszy zapisuje
+
+      const lastChunk = layer.chunks[layer.chunks.length - 1];
+
+      // sprawdzamy, czy rozmiar mapy musi zostać zaktualizowany
+      // największa wartość x koordynaty ostatniego chunka w warstwie + szerokość tego chunka
+      // jest większa niż aktualny rozmiar mapy w osi x
+      if (
+        lastChunk.x * this.jsonData.tilewidth +
+          lastChunk.width * this.jsonData.tilewidth >
+        width
+      ) {
+        width =
+          lastChunk.x * this.jsonData.tilewidth +
+          lastChunk.width * this.jsonData.tilewidth;
+      }
+      // największa wartość y koordynaty ostatniego chunka w warstwie + wysokość tego chunka
+      // jest większa niż aktualny rozmiar mapy w osi y
+      if (
+        lastChunk.y * this.jsonData.tileheight +
+          lastChunk.height * this.jsonData.tileheight >
+        height
+      ) {
+        height =
+          lastChunk.y * this.jsonData.tileheight +
+          lastChunk.height * this.jsonData.tileheight;
+      }
+    });
+
+    return { width, height };
+  }
+
   getTilePosFromSpritesheet(
     id,
     tilesetsColumns,
@@ -257,7 +347,7 @@ export class Tiled {
     return { x, y };
   }
 
-  drawChunk(chunk, tileset, image) {
+  drawChunk(chunk, tileset) {
     // this function draw chunk in correct position => chunk.x and chunk.y,
     // so you dont have to specify where to draw this
 
@@ -279,7 +369,7 @@ export class Tiled {
         );
 
         drawImagePartWithTransform(
-          image,
+          this.image,
           tilePos.x,
           tilePos.y,
           tileset.tilewidth,
@@ -296,17 +386,17 @@ export class Tiled {
           this.game.ctx,
           this.game.camera.x,
           this.game.camera.y,
-          false
+          this.game.isDebug
         );
       }
     }
   }
 
-  drawLayer(layerName, layers, tileset, image) {
-    const layer = layers.filter((el) => el.name === layerName)[0];
+  drawLayer(layerName) {
+    const layer = this.jsonData.layers.filter((el) => el.name === layerName)[0];
 
     for (let i = 0; i < layer.chunks.length; i++) {
-      this.drawChunk(layer.chunks[i], tileset, image);
+      this.drawChunk(layer.chunks[i], this.jsonData.tilesets[0], this.image);
     }
   }
 
@@ -519,18 +609,27 @@ export function drawImagePartWithTransform(
 
   // Rysuj punkt obrotu
   if (isDebug) {
+    ctx.strokeStyle = "grey";
     ctx.beginPath();
     ctx.arc(
       rotationOriginX + dx + sWidth / 2,
       rotationOriginY + dy + sHeight / 2,
-      2, // Promień punktu obrotu
+      0.1, // Promień punktu obrotu
       0,
       Math.PI * 2
     );
     ctx.closePath();
     ctx.stroke();
+    ctx.strokeStyle = "black";
   }
 
   // Przywróć poprzednie ustawienia transformacji
   ctx.restore();
+}
+
+// draw rectangle on map
+export function drawRectOnMap(x, y, width, height, ctx, camera) {
+  ctx.beginPath();
+  ctx.rect(x - camera.x, y - camera.y, width, height);
+  ctx.stroke();
 }
