@@ -95,20 +95,161 @@ export class Sprite {
     this.viewType = "unset"; // unset, texture, anim
   }
 
-  // check collisions with tiles in collidable array
-  isCollisionsWithCollidable(collidable, x = this.x, y = this.y) {
-    for (let i = 0; i < collidable.length; i++) {
+  // return array of tiles that current sprite overlaps with
+  /**
+   * Return array of tiles that current sprite overlaps with
+   * @param {Array} tiles Array of tiles to check
+   * @param {number} [x=this.x] X position of sprite to check
+   * @param {number} [y=this.y] Y position of sprite to check
+   * @returns {Array} Array of overlapping tiles
+   */
+  getOverlappingTiles(tiles, x = this.x, y = this.y) {
+    const overlappingTiles = [];
+    for (let i = 0; i < tiles.length; i++) {
       if (
-        x < collidable[i].x + collidable[i].width &&
-        x + this.width > collidable[i].x &&
-        y < collidable[i].y + collidable[i].height &&
-        this.height + y > collidable[i].y
+        x < tiles[i].x + tiles[i].width &&
+        x + this.width > tiles[i].x &&
+        y < tiles[i].y + tiles[i].height &&
+        this.height + y > tiles[i].y
       ) {
-        console.log("collision");
-        return true;
+        overlappingTiles.push(tiles[i]);
       }
     }
-    return false;
+    return overlappingTiles;
+  }
+
+  checkCollisionAABBNew(
+    selfX,
+    selfY,
+    selfW,
+    selfH,
+    rx,
+    ry,
+    rw,
+    rh,
+    isDraw = false
+  ) {
+    // Ustalenie długości odcinków centerToCenterX oraz centerToCenterY.
+    // Określają one poziomą i pionową odległość pomiędzy środkami obiektów.
+    const centerToCenterX = rx + rw / 2 - (selfX + selfW / 2);
+    const centerToCenterY = ry + rh / 2 - (selfY + selfH / 2);
+
+    // Teraz obliczamy sume długości połowy wysokości obiektów i połowy szerokości obiektów.
+    // Czyli połowa szerokości prostokta i połowa szerokości drugiego prostokta,
+    // oraz połowa wysokości prostokta i połowa wysokości drugiego prostokta.
+    const combinedHalfWidths = selfW / 2 + rw / 2;
+    const combinedHalfHeights = selfH / 2 + rh / 2;
+
+    // Porównuje odległość od środka pierwszego prostokąta do środka drugiego,
+    // z połową szerokości/wysokości prostokąta pierwszego i drugiego (dodaje je).
+    // Jeśli dwie połowy szerokości połączone ze sobą są mniejsze od odległości od jednego środka do drugiego,
+    // to prostokąty nachodzą na siebie w osi X lub w osi Y.
+
+    // Sprawdzam czy prostokąty nachodzą na siebie w osi X.
+    const isxOverlap = Math.abs(centerToCenterX) < combinedHalfWidths;
+
+    // Sprawdzam czy prostokąty nachodą na siebie w osi Y.
+    const isyOverlap = Math.abs(centerToCenterY) < combinedHalfHeights;
+
+    // jeśli nachodą na siebie w osi X i w osi Y, to prostokąty nachodzą na siebie.
+
+    // Potrzebuje obliczyć o ile nachodzą na siebie obiekty na osi X i o ile na osi Y.
+    // Od długości połączonych połówek, odejmuje odległość środek-środek,
+    // co da mi wartość o ile pokrywają sie prostokąty.
+    // Robie to w osi X i w osi Y.
+
+    const overlapX = combinedHalfWidths - Math.abs(centerToCenterX);
+    const overlapY = combinedHalfHeights - Math.abs(centerToCenterY);
+
+    // Kolejny krok, to sprawdzenie czy mniejsze jest overlapX czy overlapY.
+    // To, które jest mniejsze, wskazuje oś, na której obiekty się naszły.
+
+    // jeśli overlapX jest mniejsze od overlapY,
+    // to mniej nakładają sie na siebie w osi X, czyli jedno jest nad lub pod drugim.
+    // Jeśli odwrotnie, to po jednej stronie lub po drugiej.
+
+    const isLeftOrRight = overlapX < overlapY;
+    const isTopOrBottom = !isLeftOrRight; // lub overlapX >= overlapY
+
+    // Jeżeli overlapX jest wieksze od overlapY(góra-dół) a centerToCenterY jest dodatnie oznacza,
+    // że obiekt pierwszy naszedł na drugi od dołu
+    // (bo środek jednego jest niżej od środka drugiego(centerToCenterY dodatnie)).
+
+    const isTop = isTopOrBottom && centerToCenterY < 0;
+    const isBottom = isTopOrBottom && centerToCenterY > 0;
+    const isLeft = isLeftOrRight && centerToCenterX < 0;
+    const isRight = isLeftOrRight && centerToCenterX > 0;
+
+    const isCollision = isxOverlap && isyOverlap;
+    const side = `${isTop ? "top" : ""}${isBottom ? "bottom" : ""}${
+      isLeft ? "left" : ""
+    }${isRight ? "right" : ""}`;
+
+    if (isDraw) {
+      // Narysuj te linie
+      const rectPoint1 = { x: rx + rw / 2, y: ry + rh / 2 };
+      const rectPoint2 = {
+        x: rx + rw / 2,
+        y: selfY + selfH / 2,
+      };
+      const myPoint1 = {
+        x: selfX + selfW / 2,
+        y: selfY + selfH / 2,
+      };
+      const myPoint2 = { x: rx + rw / 2, y: selfY + selfH / 2 };
+
+      // narysuj linie jeśli jest kolizja
+      if (isCollision) {
+        drawLineOnMap(
+          myPoint1.x,
+          myPoint1.y,
+          myPoint2.x,
+          myPoint2.y,
+          this.game.ctx,
+          this.game.camera,
+          "red",
+          2
+        );
+        drawLineOnMap(
+          rectPoint1.x,
+          rectPoint1.y,
+          rectPoint2.x,
+          rectPoint2.y,
+          this.game.ctx,
+          this.game.camera,
+          "red",
+          2
+        );
+      }
+    }
+    return isCollision ? { side, centerToCenterX, centerToCenterY } : false;
+  }
+
+  /**
+   * Check on which side of the tile current sprite is located
+   * @param {Object} tile Tile to check
+   * @returns {String} Side of the tile where the sprite is located (top, right, bottom, left)
+   */
+  getSideOfTile(tile) {
+    const isAbove = this.y + this.height / 2 >= tile.y + tile.height / 2;
+    const isBelow = this.y + this.height / 2 <= tile.y + tile.height / 2;
+    const isLeft = this.x + this.width / 2 >= tile.x + tile.width / 2;
+    const isRight = this.x + this.width / 2 <= tile.x + tile.width / 2;
+
+    if (isLeft) {
+      return "left";
+    }
+    if (isRight) {
+      return "right";
+    }
+    if (isAbove) {
+      return "top";
+    }
+    if (isBelow) {
+      return "bottom";
+    }
+
+    return null;
   }
 
   addTexture(fromX, fromY, fromWidth, fromHeight, image) {
@@ -258,6 +399,7 @@ export class Tiled {
     this.mapSize = null;
 
     this.collidable = [];
+    this.highlight = [];
     this.preload();
   }
 
@@ -332,6 +474,25 @@ export class Tiled {
     this.collidable.forEach((el) =>
       drawRectOnMap(el.x, el.y, 16, 16, this.game.ctx, this.game.camera)
     );
+
+    // draw highlight
+    this.highlight.forEach((el) =>
+      drawRectOnMap(
+        el.x,
+        el.y,
+        el.width,
+        el.height,
+        this.game.ctx,
+        this.game.camera,
+        "red"
+      )
+    );
+
+    // highlight tile
+  }
+
+  highlightTiles(tiles) {
+    this.highlight = tiles;
   }
 
   getMapSize() {
@@ -386,6 +547,18 @@ export class Tiled {
     return { x: column * tilesetsTileWidth, y: row * tilkesetsTileHeight };
   }
 
+  /**
+   * @description
+   *   Generates 2D position from 1D array index.
+   *
+   * @param {number} index
+   *   1D array index.
+   * @param {number} columns
+   *   Number of columns in 2D array.
+   *
+   * @returns {{x: number, y: number}}
+   *   2D position.
+   */
   get2dPosFrom1dArray(index, columns) {
     const x = index % columns;
     const y = Math.floor(index / columns);
@@ -758,8 +931,46 @@ export function drawImagePartWithTransform(
 }
 
 // draw rectangle on map
-export function drawRectOnMap(x, y, width, height, ctx, camera) {
+export function drawRectOnMap(
+  x,
+  y,
+  width,
+  height,
+  ctx,
+  camera,
+  color = "black",
+  lineWidth = 1
+) {
+  // console.log(
+  //   `Drawing rect on map: x=${x}, y=${y}, width=${width}, height=${height}, camera=${camera}`
+  // );
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = color;
   ctx.beginPath();
   ctx.rect(x - camera.x, y - camera.y, width, height);
   ctx.stroke();
+  ctx.closePath();
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 1;
+}
+
+export function drawLineOnMap(
+  x1,
+  y1,
+  x2,
+  y2,
+  ctx,
+  camera,
+  color = "black",
+  lineWidth = 1
+) {
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x1 - camera.x, y1 - camera.y);
+  ctx.lineTo(x2 - camera.x, y2 - camera.y);
+  ctx.stroke();
+  ctx.closePath();
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 1;
 }
