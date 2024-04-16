@@ -27,154 +27,131 @@ class Player extends Sprite {
     let isMoving = false; // dla zmiany animacji
 
     if (game.keys.key[65]) {
+      // if pressed a
       normVel.x = -1;
       this.isFlipX = true;
       isMoving = true;
     } else if (game.keys.key[68]) {
+      // if pressed d
       normVel.x = 1;
       this.isFlipX = false;
       isMoving = true;
     }
     if (game.keys.key[87]) {
+      // if pressed w
       normVel.y = -1;
       isMoving = true;
     } else if (game.keys.key[83]) {
+      // if pressed s
       normVel.y = 1;
       isMoving = true;
     }
 
     normVel.normalize();
 
-    // check if next frame position is inside the map boundaries
+    // check if next frame position
     const nextX = this.getNextFramePos(this.x, this.y, normVel).x;
     const nextY = this.getNextFramePos(this.x, this.y, normVel).y;
 
-    // const overlappingTiles = this.getOverlappingTiles(
-    //   tiled.collidable,
-    //   nextX,
-    //   nextY
-    // );
+    const closestTiles = {
+      top: { length: 0, index: false },
+      bottom: { length: 0, index: false },
+      left: { length: 0, index: false },
+      right: { length: 0, index: false },
+    };
 
-    let closest = 0;
-    let indexClosestTile = false;
+    // function checkTile(collision) {
+    //   if (
+    //     Math.abs(collision.centerToCenterX) +
+    //       Math.abs(collision.centerToCenterY) <
+    //       closestTiles[collision.side].length ||
+    //     closestTiles[collision.side].length === 0
+    //   ) {
+    //     closestTiles[collision.side].length =
+    //       Math.abs(collision.centerToCenterX) +
+    //       Math.abs(collision.centerToCenterY);
+    //     closestTiles[collision.side].index = index;
+    //   }
+    // }
+
+    // sprawdź wszystkie collidable
     tiled.collidable.forEach((tile, index) => {
-      const collision = this.checkCollisionAABBNew(
-        this.x,
-        this.y,
-        this.width,
-        this.height,
-        tile.x,
-        tile.y,
-        tile.width,
-        tile.height
-      );
-
-      // oblicz najbliższy
-
-      if (collision.side) {
-        if (
-          Math.abs(collision.centerToCenterX) +
-            Math.abs(collision.centerToCenterY) <
-            closest ||
-          closest === 0
-        ) {
-          closest =
-            Math.abs(collision.centerToCenterX) +
-            Math.abs(collision.centerToCenterY);
-          indexClosestTile = index;
-        }
-
-        collision.side ? console.log(collision.side) : "";
-      }
-    });
-
-    if (indexClosestTile) {
       const collision = this.checkCollisionAABBNew(
         nextX,
         nextY,
         this.width,
         this.height,
-        tiled.collidable[indexClosestTile].x,
-        tiled.collidable[indexClosestTile].y,
-        tiled.collidable[indexClosestTile].width,
-        tiled.collidable[indexClosestTile].height,
-        true
+        tile.x,
+        tile.y,
+        tile.width,
+        tile.height,
+        false,
+        1
       );
 
-      if (collision.side === "bottom") {
-        normVel.y = 0;
-        this.y = tiled.collidable[indexClosestTile].y - this.height;
+      // oblicz najbliższy tylko z kolidujących
+      if (collision.side) {
+        // zapisuje jeden najbliższy tile z każdej strony
+        if (
+          Math.abs(collision.centerToCenterX) +
+            Math.abs(collision.centerToCenterY) <
+            closestTiles[collision.side].length ||
+          closestTiles[collision.side].length === 0
+        ) {
+          closestTiles[collision.side].length =
+            Math.abs(collision.centerToCenterX) +
+            Math.abs(collision.centerToCenterY);
+          closestTiles[collision.side].index = index;
+        }
+
+        // collision.side ? console.log(collision.side) : "";
       }
-      if (collision.side === "top") {
-        normVel.y = 0;
-        this.y =
-          tiled.collidable[indexClosestTile].y +
-          tiled.collidable[indexClosestTile].height;
+    });
+
+    // zmień closestTiles na tablice z indeksami i nazwą strony
+    const closestTilesArr = Object.entries(closestTiles);
+    // console.log(closestTilesArr);
+
+    // sprawdź kolizje dla najbliższego tile z każdej strony w której aktualnie istnieje
+    closestTilesArr.forEach((tile) => {
+      if (tile[1].index) {
+        const collision = this.checkCollisionAABBNew(
+          nextX,
+          nextY,
+          this.width,
+          this.height,
+          tiled.collidable[tile[1].index].x,
+          tiled.collidable[tile[1].index].y,
+          tiled.collidable[tile[1].index].width,
+          tiled.collidable[tile[1].index].height,
+          true
+        );
+        if (collision.side) {
+          console.log(collision);
+
+          // zablokuj ruch
+          if (collision.side === "bottom") {
+            // velocity Y nie może być większe od zera
+            if (normVel.y > 0) normVel.y = 0;
+          }
+          if (collision.side === "top") {
+            // velocity Y nie można być mniejsze od zera
+            if (normVel.y < 0) normVel.y = 0;
+          }
+          if (collision.side === "left") {
+            // velocity X nie można być mniejsze od zera
+            if (normVel.x < 0) normVel.x = 0;
+          }
+          if (collision.side === "right") {
+            // velocity X nie można być wieksze od zera
+            if (normVel.x > 0) normVel.x = 0;
+          }
+        }
       }
-      if (collision.side === "left") {
-        normVel.x = 0;
-        this.x =
-          tiled.collidable[indexClosestTile].x +
-          tiled.collidable[indexClosestTile].width;
-      }
-      if (collision.side === "right") {
-        normVel.x = 0;
-        this.x = tiled.collidable[indexClosestTile].x - this.width;
-      }
-    }
+    });
 
     console.log(normVel.x, normVel.y);
 
-    // if (tiled.isInside(nextX, nextY, this.width, this.height)) {
-    // if (overlappingTiles.length === 0) {
-    //   // if not collide
-    //   if (tiled.highlight.length !== 0) tiled.highlightTiles([]);
-    //   // dodaj ttymczasowy wektor do vel
-    //   this.vel.add(normVel);
-    // } else {
-    //   // if collide
-    //   // show tiles you collide with
-    //   tiled.highlightTiles(overlappingTiles);
-    //   // block only x or only y velocity
-    //   overlappingTiles.forEach((tile) => {
-    //     // const side = this.checkCollision2Rect(tile, this);
-    //     // console.log(side);
-    //     // if (side === "top" || side === "bottom") {
-    //     //   normVel.y = 0;
-    //     // }
-    //     // if (side === "left" || side === "right") {
-    //     //   normVel.x = 0;
-    //     // }
-    //     // const points = this.checkCollisionAABBNew(
-    //     //   tile.x,
-    //     //   tile.y,
-    //     //   tile.width,
-    //     //   tile.height
-    //     // );
-    //     // drawLineOnMap(
-    //     //   points.myPoint1.x,
-    //     //   points.myPoint1.y,
-    //     //   points.myPoint2.x,
-    //     //   points.myPoint2.y,
-    //     //   game.ctx,
-    //     //   game.camera,
-    //     //   "blue",
-    //     //   2
-    //     // );
-    //     // drawLineOnMap(
-    //     //   points.rectPoint1.x,
-    //     //   points.rectPoint1.y,
-    //     //   points.rectPoint2.x,
-    //     //   points.rectPoint2.y,
-    //     //   game.ctx,
-    //     //   game.camera,
-    //     //   "blue",
-    //     //   2
-    //     // );
-    //   });
-    //   this.vel.add(normVel);
-    // }
-    // }
     this.vel.add(normVel);
 
     // add vel to pos

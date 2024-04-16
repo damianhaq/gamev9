@@ -127,7 +127,8 @@ export class Sprite {
     ry,
     rw,
     rh,
-    isDraw = false
+    isDraw = false,
+    tolerance = 0
   ) {
     // Ustalenie długości odcinków centerToCenterX oraz centerToCenterY.
     // Określają one poziomą i pionową odległość pomiędzy środkami obiektów.
@@ -180,6 +181,13 @@ export class Sprite {
     const isLeft = isLeftOrRight && centerToCenterX < 0;
     const isRight = isLeftOrRight && centerToCenterX > 0;
 
+    // jesli tolerancja jest większ od zera to róznica między overlapX i overlapY musi być wieksza od tolerancji aby uznać to za kolizje.
+    // Czyli.. jeśli kolizja jest narożnik do narożnika, to nie uznawaj kolizji jeśli jedna strona(overlapX) będzie nachodzić na drugą(overlapY) słabiej n iż tolerancja, czyli np 1px.
+    // Czyli.. uznaj kolizje tylko wtedy jeśli jedna strona nachodzi bardziej od drugiej o tolerancje.
+    // Czyli w ptzypadku gdy mamy tolerancje 1px i jeśli od prawej strony nachodzi o 0.7 a od dołu o 0.7 to nie uznaj kolizji, lub prawej 0.7 a od dołu 1.1 to nie uznaj kolizji, ale jeśli od prawej 0.7 a od dołu 2.1 to uznaj kolizje, bo różnica jest wieksza od tolerancji.
+    if (tolerance > 0 && Math.abs(overlapX - overlapY) < tolerance)
+      return false;
+
     const isCollision = isxOverlap && isyOverlap;
     const side = `${isTop ? "top" : ""}${isBottom ? "bottom" : ""}${
       isLeft ? "left" : ""
@@ -222,7 +230,9 @@ export class Sprite {
         );
       }
     }
-    return isCollision ? { side, centerToCenterX, centerToCenterY } : false;
+    return isCollision
+      ? { side, centerToCenterX, centerToCenterY, overlapX, overlapY }
+      : false;
   }
 
   /**
