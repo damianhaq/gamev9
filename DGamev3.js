@@ -18,7 +18,9 @@ export class Game {
     this.isDebug = true;
 
     this.mouse = {
-      click: false,
+      // click: false,
+
+      isMouseDown: false,
       x: false,
       y: false,
     };
@@ -48,10 +50,12 @@ export class Game {
     this.canvas.setAttribute("tabindex", 0);
 
     this.canvas.addEventListener("mousedown", (ev) => {
-      this.mouse.click = true;
+      this.mouse.isMouseDown = true;
+      this.mouse.x = Math.round(ev.offsetX / this.scaleFactor);
+      this.mouse.y = Math.round(ev.offsetY / this.scaleFactor);
     });
     this.canvas.addEventListener("mouseup", (ev) => {
-      this.mouse.click = false;
+      this.mouse.isMouseDown = false;
     });
     this.canvas.addEventListener("mousemove", (ev) => {
       this.mouse.x = Math.round(ev.offsetX / this.scaleFactor);

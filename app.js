@@ -23,35 +23,60 @@ class Player extends Sprite {
   }
 
   update() {
-    let normVel = new Vector(0, 0); // tymczasowy vector
-    let isMoving = false; // dla zmiany animacji
+    const tempVel = this.WSADMove();
 
-    if (game.keys.key[65]) {
-      // if pressed a
-      normVel.x = -1;
+    // const tempVel = this.mouseMove();
+
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+
+    // zmiana animacji
+    if (this.currentAnim !== "idle" && tempVel.getLen() === 0) {
+      this.setCurrentAnim("idle");
+    }
+    if (tempVel.getLen() > 0) {
+      this.setCurrentAnim("run");
+    }
+
+    // odwrócenie animacji w poziomie
+    if (tempVel.x < 0) {
       this.isFlipX = true;
-      isMoving = true;
-    } else if (game.keys.key[68]) {
-      // if pressed d
-      normVel.x = 1;
+    } else if (tempVel.x > 0) {
       this.isFlipX = false;
-      isMoving = true;
-    }
-    if (game.keys.key[87]) {
-      // if pressed w
-      normVel.y = -1;
-      isMoving = true;
-    } else if (game.keys.key[83]) {
-      // if pressed s
-      normVel.y = 1;
-      isMoving = true;
     }
 
-    normVel.normalize();
+    this.moveAndCollide(tempVel);
+  }
+
+  mouseMove() {
+    // poruszanie sie za pomocą kliknięcia
+    let tempVel = new Vector(0, 0); // tymczasowy vector
+
+    if (game.mouse.isMouseDown) {
+      tempVel.x = game.mouse.x + game.camera.x - this.x;
+      tempVel.y = game.mouse.y + game.camera.y - this.y;
+    }
+
+    return tempVel;
+  }
+
+  WSADMove() {
+    let tempVel = new Vector(0, 0); // tymczasowy vector
+    if (game.keys.key[65]) tempVel.x = -1; // if pressed a
+    if (game.keys.key[68]) tempVel.x = 1; // if pressed d
+    if (game.keys.key[87]) tempVel.y = -1; // if pressed w
+    if (game.keys.key[83]) tempVel.y = 1; // if pressed s
+
+    return tempVel;
+  }
+
+  moveAndCollide(vector) {
+    // reset vel to 0 if no key is pressed
+    this.vel.set(0, 0);
 
     // check if next frame position
-    const nextX = this.getNextFramePos(this.x, this.y, normVel).x;
-    const nextY = this.getNextFramePos(this.x, this.y, normVel).y;
+    const nextX = this.getNextFramePos(this.x, this.y, vector).x;
+    const nextY = this.getNextFramePos(this.x, this.y, vector).y;
 
     const closestTiles = {
       top: { length: 0, index: false },
@@ -59,21 +84,6 @@ class Player extends Sprite {
       left: { length: 0, index: false },
       right: { length: 0, index: false },
     };
-
-    // function checkTile(collision) {
-    //   if (
-    //     Math.abs(collision.centerToCenterX) +
-    //       Math.abs(collision.centerToCenterY) <
-    //       closestTiles[collision.side].length ||
-    //     closestTiles[collision.side].length === 0
-    //   ) {
-    //     closestTiles[collision.side].length =
-    //       Math.abs(collision.centerToCenterX) +
-    //       Math.abs(collision.centerToCenterY);
-    //     closestTiles[collision.side].index = index;
-    //   }
-    // }
-
     // sprawdź wszystkie collidable
     tiled.collidable.forEach((tile, index) => {
       const collision = this.checkCollisionAABBNew(
@@ -91,7 +101,7 @@ class Player extends Sprite {
 
       // oblicz najbliższy tylko z kolidujących
       if (collision.side) {
-        // zapisuje jeden najbliższy tile z każdej strony
+        // zapisuje jeden najbliższy tile dla każdej strony
         if (
           Math.abs(collision.centerToCenterX) +
             Math.abs(collision.centerToCenterY) <
@@ -103,14 +113,11 @@ class Player extends Sprite {
             Math.abs(collision.centerToCenterY);
           closestTiles[collision.side].index = index;
         }
-
-        // collision.side ? console.log(collision.side) : "";
       }
     });
 
     // zmień closestTiles na tablice z indeksami i nazwą strony
     const closestTilesArr = Object.entries(closestTiles);
-    // console.log(closestTilesArr);
 
     // sprawdź kolizje dla najbliższego tile z każdej strony w której aktualnie istnieje
     closestTilesArr.forEach((tile) => {
@@ -127,41 +134,34 @@ class Player extends Sprite {
           true
         );
         if (collision.side) {
-          console.log(collision);
+          // console.log(collision);
 
           // zablokuj ruch
           if (collision.side === "bottom") {
             // velocity Y nie może być większe od zera
-            if (normVel.y > 0) normVel.y = 0;
+            if (vector.y > 0) vector.y = 0;
           }
           if (collision.side === "top") {
             // velocity Y nie można być mniejsze od zera
-            if (normVel.y < 0) normVel.y = 0;
+            if (vector.y < 0) vector.y = 0;
           }
           if (collision.side === "left") {
             // velocity X nie można być mniejsze od zera
-            if (normVel.x < 0) normVel.x = 0;
+            if (vector.x < 0) vector.x = 0;
           }
           if (collision.side === "right") {
             // velocity X nie można być wieksze od zera
-            if (normVel.x > 0) normVel.x = 0;
+            if (vector.x > 0) vector.x = 0;
           }
         }
       }
     });
 
-    console.log(normVel.x, normVel.y);
-
-    this.vel.add(normVel);
+    this.vel.add(vector);
 
     // add vel to pos
     this.x += this.vel.x;
     this.y += this.vel.y;
-
-    // reset vel to 0 if no key is pressed
-    this.vel.set(0, 0);
-
-    this.setCurrentAnim(isMoving ? "run" : "idle");
   }
 
   // // calculate next frame position
@@ -197,6 +197,7 @@ function update(deltaTime) {
   // game.camera.set(player.position.x, player.position.y);
 
   game.setCamera(newPlayer.x, newPlayer.y);
+  // console.log(game.mouse.isMouseDown);
 }
 
 let rotate = 0;
