@@ -680,13 +680,17 @@ export class Vector {
     this.y += vector.y;
   }
 
-  /**
-   * @param {number} x The value to subtract from the x-coordinate.
-   * @param {number} y The value to subtract from the y-coordinate.
-   */
-  sub(x, y) {
-    this.x -= x;
-    this.y -= y;
+  clone() {
+    return new Vector(this.x, this.y);
+  }
+
+  sub(vector) {
+    this.x -= vector.x;
+    this.y -= vector.y;
+
+    return this;
+    // this.x -= x;
+    // this.y -= y;
   }
 
   /**

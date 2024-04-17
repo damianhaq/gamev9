@@ -23,29 +23,29 @@ class Player extends Sprite {
   }
 
   update() {
-    const tempVel = this.WSADMove();
+    // this.WSADMove();
 
-    // const tempVel = this.mouseMove();
+    // this.mouseMove();
 
-    tempVel.normalize();
-    tempVel.mul(0.5, 0.5);
+    // tempVel.normalize();
+    // tempVel.mul(0.5, 0.5);
 
     // zmiana animacji
-    if (this.currentAnim !== "idle" && tempVel.getLen() === 0) {
+    if (this.currentAnim !== "idle" && this.vel.getLen() === 0) {
       this.setCurrentAnim("idle");
     }
-    if (tempVel.getLen() > 0) {
+    if (this.vel.getLen() > 0) {
       this.setCurrentAnim("run");
     }
 
     // odwrócenie animacji w poziomie
-    if (tempVel.x < 0) {
+    if (this.vel.x < 0) {
       this.isFlipX = true;
-    } else if (tempVel.x > 0) {
+    } else if (this.vel.x > 0) {
       this.isFlipX = false;
     }
 
-    this.moveAndCollide(tempVel);
+    this.moveAndCollide();
   }
 
   mouseMove() {
@@ -57,7 +57,10 @@ class Player extends Sprite {
       tempVel.y = game.mouse.y + game.camera.y - this.y;
     }
 
-    return tempVel;
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+
+    this.vel = tempVel;
   }
 
   WSADMove() {
@@ -67,16 +70,64 @@ class Player extends Sprite {
     if (game.keys.key[87]) tempVel.y = -1; // if pressed w
     if (game.keys.key[83]) tempVel.y = 1; // if pressed s
 
-    return tempVel;
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+
+    this.vel = tempVel;
+
+    // return tempVel;
   }
 
-  moveAndCollide(vector) {
+  moveToPointWIP(x, y) {
+    // nie testowane
+    const tempVel = new Vector(x - this.x, y - this.y);
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+    this.vel = tempVel;
+  }
+
+  moveToClickPoint() {
+    // set destination point to mouse position
+    if (game.mouse.isMouseDown) {
+      this.destinationPoint = new Vector(
+        game.mouse.x + game.camera.x,
+        game.mouse.y + game.camera.y
+      );
+    }
+
+    // move to destination point
+    if (this.destinationPoint) {
+      // calculate range to destination point without mutating destination point
+      const rangeToDestinationPoint = this.destinationPoint
+        .clone()
+        .sub({ x: this.x, y: this.y })
+        .getLen();
+      // console.log(rangeToDestinationPoint);
+
+      let tempVel = new Vector(0, 0);
+
+      tempVel.x = this.destinationPoint.x - this.x;
+      tempVel.y = this.destinationPoint.y - this.y;
+
+      tempVel.normalize();
+
+      tempVel.mul(0.5, 0.5);
+
+      if (rangeToDestinationPoint < 1) {
+        tempVel = new Vector(0, 0);
+        this.destinationPoint = null;
+      }
+      this.vel = tempVel;
+    }
+  }
+
+  moveAndCollide() {
     // reset vel to 0 if no key is pressed
-    this.vel.set(0, 0);
+    // this.vel.set(0, 0);
 
     // check if next frame position
-    const nextX = this.getNextFramePos(this.x, this.y, vector).x;
-    const nextY = this.getNextFramePos(this.x, this.y, vector).y;
+    const nextX = this.getNextFramePos(this.x, this.y, this.vel).x;
+    const nextY = this.getNextFramePos(this.x, this.y, this.vel).y;
 
     const closestTiles = {
       top: { length: 0, index: false },
@@ -139,25 +190,23 @@ class Player extends Sprite {
           // zablokuj ruch
           if (collision.side === "bottom") {
             // velocity Y nie może być większe od zera
-            if (vector.y > 0) vector.y = 0;
+            if (this.vel.y > 0) this.vel.y = 0;
           }
           if (collision.side === "top") {
             // velocity Y nie można być mniejsze od zera
-            if (vector.y < 0) vector.y = 0;
+            if (this.vel.y < 0) this.vel.y = 0;
           }
           if (collision.side === "left") {
             // velocity X nie można być mniejsze od zera
-            if (vector.x < 0) vector.x = 0;
+            if (this.vel.x < 0) this.vel.x = 0;
           }
           if (collision.side === "right") {
             // velocity X nie można być wieksze od zera
-            if (vector.x > 0) vector.x = 0;
+            if (this.vel.x > 0) this.vel.x = 0;
           }
         }
       }
     });
-
-    this.vel.add(vector);
 
     // add vel to pos
     this.x += this.vel.x;
@@ -191,10 +240,40 @@ newPlayer.addAnim(
   bigSpritev7
 );
 
+const enemy = new Player(150, 50, 16, 22, game);
+
+enemy.addAnim(
+  "idle",
+  spriteSheetData.skeleton.idle.x,
+  spriteSheetData.skeleton.idle.y,
+  spriteSheetData.skeleton.idle.w,
+  spriteSheetData.skeleton.idle.h,
+  spriteSheetData.skeleton.idle.frames,
+  bigSpritev7
+);
+
+enemy.addAnim(
+  "run",
+  spriteSheetData.skeleton.run.x,
+  spriteSheetData.skeleton.run.y,
+  spriteSheetData.skeleton.run.w,
+  spriteSheetData.skeleton.run.h,
+  spriteSheetData.skeleton.run.frames,
+  bigSpritev7
+);
+
 function update(deltaTime) {
   // player.applyForce(DGame.vector.create(0, 0.01));
   // player.applyForce(DGame.vector.create(0.01, 0));
   // game.camera.set(player.position.x, player.position.y);
+
+  newPlayer.WSADMove();
+
+  // newPlayer.moveToClickPoint();
+
+  // newPlayer.mouseMove();
+
+  enemy.moveToClickPoint();
 
   game.setCamera(newPlayer.x, newPlayer.y);
   // console.log(game.mouse.isMouseDown);
@@ -214,6 +293,9 @@ function draw(deltaTime) {
 
   newPlayer.update();
   newPlayer.draw(deltaTime);
+
+  enemy.update();
+  enemy.draw(deltaTime);
 
   tiled.drawLayer("foreground");
   // newPlayer.anim.rotateDeg = rotate;
