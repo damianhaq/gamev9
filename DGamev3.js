@@ -404,6 +404,278 @@ export class Sprite {
   }
 }
 
+export class Character extends Sprite {
+  constructor(x, y, width, height, game) {
+    super(x, y, width, height, game);
+
+    this.x = x;
+    this.y = y;
+    this.vel = new Vector(0, 0);
+    this.acc = new Vector(0, 0);
+
+    this.collisionWithSprites = [];
+    this.isCollisionWithCollidableTiles = false;
+  }
+
+  update() {
+    // this.WSADMove();
+    // this.mouseMove();
+    // these functions only set velocity
+
+    // zmiana animacji
+    if (this.currentAnim !== "idle" && this.vel.getLen() === 0) {
+      this.setCurrentAnim("idle");
+    }
+    if (this.vel.getLen() > 0) {
+      this.setCurrentAnim("run");
+    }
+
+    // odwrócenie animacji w poziomie
+    if (this.vel.x < 0) {
+      this.isFlipX = true;
+    } else if (this.vel.x > 0) {
+      this.isFlipX = false;
+    }
+
+    this.collideManager();
+
+    // add vel to pos
+    this.x += this.vel.x;
+    this.y += this.vel.y;
+  }
+
+  collideManager() {
+    if (this.isCollisionWithCollidableTiles) this.collideWithCollidableTiled();
+    // console.log(this.collisionWithSprites.length);
+    if (this.collisionWithSprites.length > 0) this.collideWitchSprites();
+  }
+
+  mouseMove() {
+    // poruszanie sie za pomocą kliknięcia
+    let tempVel = new Vector(0, 0); // tymczasowy vector
+
+    if (game.mouse.isMouseDown) {
+      tempVel.x = game.mouse.x + game.camera.x - this.x;
+      tempVel.y = game.mouse.y + game.camera.y - this.y;
+    }
+
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+
+    this.vel = tempVel;
+  }
+
+  WSADMove(game) {
+    // create a temporary vector and change it with pressed keys
+    // add it to velocity
+    let tempVel = new Vector(0, 0); // tymczasowy vector
+    if (game.keys.key[65]) tempVel.x = -1; // if pressed a
+    if (game.keys.key[68]) tempVel.x = 1; // if pressed d
+    if (game.keys.key[87]) tempVel.y = -1; // if pressed w
+    if (game.keys.key[83]) tempVel.y = 1; // if pressed s
+
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+
+    this.vel = tempVel;
+
+    // return tempVel;
+  }
+
+  moveToPointWIP(x, y) {
+    // nie testowane
+    const tempVel = new Vector(x - this.x, y - this.y);
+    tempVel.normalize();
+    tempVel.mul(0.5, 0.5);
+    this.vel = tempVel;
+  }
+
+  moveToClickPoint(game) {
+    // set destination point to mouse position
+    if (game.mouse.isMouseDown) {
+      this.destinationPoint = new Vector(
+        game.mouse.x + game.camera.x,
+        game.mouse.y + game.camera.y
+      );
+    }
+
+    // move to destination point
+    if (this.destinationPoint) {
+      // calculate range to destination point without mutating destination point
+      const rangeToDestinationPoint = this.destinationPoint
+        .clone()
+        .sub({ x: this.x, y: this.y })
+        .getLen();
+      // console.log(rangeToDestinationPoint);
+
+      let tempVel = new Vector(0, 0);
+
+      tempVel.x = this.destinationPoint.x - this.x;
+      tempVel.y = this.destinationPoint.y - this.y;
+
+      tempVel.normalize();
+
+      tempVel.mul(0.5, 0.5);
+
+      if (rangeToDestinationPoint < 1) {
+        tempVel = new Vector(0, 0);
+        this.destinationPoint = null;
+      }
+      this.vel = tempVel;
+    }
+  }
+
+  collideWithCollidableTiled() {
+    // this function get collidable, check it and reduce velocity if colliding
+
+    // reset vel to 0 if no key is pressed
+    // this.vel.set(0, 0);
+
+    // check if next frame position
+    const nextX = this.getNextFramePos(this.x, this.y, this.vel).x;
+    const nextY = this.getNextFramePos(this.x, this.y, this.vel).y;
+
+    const closestTiles = {
+      top: { length: 0, index: false },
+      bottom: { length: 0, index: false },
+      left: { length: 0, index: false },
+      right: { length: 0, index: false },
+    };
+    // sprawdź wszystkie collidable
+    this.tiled.collidable.forEach((tile, index) => {
+      const collision = this.checkCollisionAABBNew(
+        nextX,
+        nextY,
+        this.width,
+        this.height,
+        tile.x,
+        tile.y,
+        tile.width,
+        tile.height,
+        false,
+        1
+      );
+
+      // oblicz najbliższy tylko z kolidujących
+      if (collision.side) {
+        // zapisuje jeden najbliższy tile dla każdej strony
+        if (
+          Math.abs(collision.centerToCenterX) +
+            Math.abs(collision.centerToCenterY) <
+            closestTiles[collision.side].length ||
+          closestTiles[collision.side].length === 0
+        ) {
+          closestTiles[collision.side].length =
+            Math.abs(collision.centerToCenterX) +
+            Math.abs(collision.centerToCenterY);
+          closestTiles[collision.side].index = index;
+        }
+      }
+    });
+
+    // zmień closestTiles na tablice z indeksami i nazwą strony
+    const closestTilesArr = Object.entries(closestTiles);
+
+    // sprawdź kolizje dla najbliższego tile z każdej strony w której aktualnie istnieje
+    closestTilesArr.forEach((tile) => {
+      if (tile[1].index) {
+        const collision = this.checkCollisionAABBNew(
+          nextX,
+          nextY,
+          this.width,
+          this.height,
+          this.tiled.collidable[tile[1].index].x,
+          this.tiled.collidable[tile[1].index].y,
+          this.tiled.collidable[tile[1].index].width,
+          this.tiled.collidable[tile[1].index].height,
+          true
+        );
+        if (collision.side) {
+          // console.log(collision);
+
+          // zablokuj ruch
+          if (collision.side === "bottom") {
+            // velocity Y nie może być większe od zera
+            if (this.vel.y > 0) this.vel.y = 0;
+          }
+          if (collision.side === "top") {
+            // velocity Y nie można być mniejsze od zera
+            if (this.vel.y < 0) this.vel.y = 0;
+          }
+          if (collision.side === "left") {
+            // velocity X nie można być mniejsze od zera
+            if (this.vel.x < 0) this.vel.x = 0;
+          }
+          if (collision.side === "right") {
+            // velocity X nie można być wieksze od zera
+            if (this.vel.x > 0) this.vel.x = 0;
+          }
+        }
+      }
+    });
+  }
+
+  collideWitchSprites() {
+    this.collisionWithSprites.forEach((el) => {
+      const coll = this.checkCollisionAABBNew(
+        this.x,
+        this.y,
+        this.width,
+        this.height,
+        el.x,
+        el.y,
+        el.width,
+        el.height,
+        true,
+        1
+      );
+
+      if (coll.side) {
+        // console.log(collision);
+
+        // zablokuj ruch
+        if (coll.side === "bottom") {
+          // velocity Y nie może być większe od zera
+          if (this.vel.y > 0) this.vel.y = 0;
+        }
+        if (coll.side === "top") {
+          // velocity Y nie można być mniejsze od zera
+          if (this.vel.y < 0) this.vel.y = 0;
+        }
+        if (coll.side === "left") {
+          // velocity X nie można być mniejsze od zera
+          if (this.vel.x < 0) this.vel.x = 0;
+        }
+        if (coll.side === "right") {
+          // velocity X nie można być wieksze od zera
+          if (this.vel.x > 0) this.vel.x = 0;
+        }
+      }
+    });
+  }
+
+  addCollisionWithSprite(sprite) {
+    this.collisionWithSprites.push(sprite);
+  }
+
+  addCollisionWithCollidableTiles(tiled) {
+    // check if tiled.collidable is not empty
+    if (tiled.collidable.length === 0) {
+      console.warn(
+        "No collidable tiles found in Tiled. Add layer using addLayerToCollidable()."
+      );
+    } else {
+      this.tiled = tiled;
+      this.isCollisionWithCollidableTiles = true;
+    }
+  }
+
+  // // calculate next frame position
+  getNextFramePos(posX, posY, vel) {
+    return { x: posX + vel.x, y: posY + vel.y };
+  }
+}
+
 export class Tiled {
   constructor(game, jsonData, image) {
     this.game = game;
@@ -418,14 +690,18 @@ export class Tiled {
   }
 
   preload() {
-    // get world bounds firstly
-    this.mapSize = this.getMapSize();
-
-    // add tiles to collidable
-    this.addTilesToCollidable("walls");
+    // get world bounds
+    this.mapSize = this.getMapSize(); // need it for draw world bounds
   }
 
   getWorldBounds() {
+    // check if mapSize is null
+    if (this.mapSize === null) {
+      console.warn(
+        "Map size is null. Please set it before getting world bounds."
+      );
+      return { x: null, y: null, width: null, height: null };
+    }
     return {
       x: 0,
       y: 0,
@@ -445,6 +721,14 @@ export class Tiled {
    */
   isInside(x, y, width, height) {
     const worldBounds = this.getWorldBounds();
+    // chceck if getWorldBounds return null and console.warn
+    if (worldBounds.x === null) {
+      console.warn(
+        "Map size is null. Please set it before checking if object is inside."
+      );
+      return false;
+    }
+
     return (
       x >= worldBounds.x &&
       x + width <= worldBounds.x + worldBounds.width &&
@@ -453,7 +737,7 @@ export class Tiled {
     );
   }
 
-  addTilesToCollidable(layerName) {
+  addLayerToCollidable(layerName) {
     const layer = this.jsonData.layers.filter((el) => el.name === layerName)[0];
 
     layer.chunks.forEach((chunk) => {
@@ -475,14 +759,21 @@ export class Tiled {
     if (!this.game.isDebug) return;
 
     // draw world bounds
-    drawRectOnMap(
-      0,
-      0,
-      this.mapSize.width,
-      this.mapSize.height,
-      this.game.ctx,
-      this.game.camera
-    );
+    // check if mapSize is null
+    if (this.mapSize === null) {
+      console.warn(
+        "Map size is null. Please set it before drawing world bounds."
+      );
+    } else {
+      drawRectOnMap(
+        0,
+        0,
+        this.mapSize.width,
+        this.mapSize.height,
+        this.game.ctx,
+        this.game.camera
+      );
+    }
 
     // draw collidable
     this.collidable.forEach((el) =>
