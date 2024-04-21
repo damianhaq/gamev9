@@ -1,18 +1,20 @@
-import { DGame } from "./DGamev2.js";
 import {
   Character,
   Game,
   Sprite,
   Tiled,
   Vector,
+  drawCircleOnMap,
+  drawImagePartWithTransform,
   drawLineOnMap,
+  isLineRectCollision,
 } from "./DGamev3.js";
 import { spriteSheetData } from "./bigSpritev7data.js";
 import jsonData from "./gamev9.json" assert { type: "json" };
 
 const game = new Game();
 game.init("canvas", 1600, 800, 2);
-// game.isDebug = false;
+game.isDebug = false;
 
 const bigSpritev7 = new Image();
 bigSpritev7.src = "BigSpritev7.png";
@@ -69,16 +71,93 @@ newPlayer.addCollisionWithCollidableTiles(tiled);
 
 enemy.addCollisionWithCollidableTiles(tiled);
 
+const silverSword = {
+  x: 0,
+  y: 0,
+  startLength: 10,
+  myVector: new Vector(0, 0),
+  swingDeg: 0,
+
+  update: function (deltaTime) {
+    const mousePos = new Vector(
+      game.mouse.x + game.camera.x,
+      game.mouse.y + game.camera.y
+    );
+    const playerCenterPos = new Vector(
+      newPlayer.x + newPlayer.width / 2,
+      newPlayer.y + newPlayer.height / 2
+    );
+    // create vector from player to mouse
+    this.myVector = mousePos.sub(playerCenterPos);
+    this.myVector.setMag(30);
+    this.swingDeg += deltaTime / 3;
+    this.myVector.setAngleDeg(this.swingDeg);
+
+    // create startLength vector
+    const startLengthVector = this.myVector.clone().setMag(this.startLength);
+
+    // update position
+    this.x = newPlayer.x + newPlayer.width / 2 + startLengthVector.x;
+    this.y = newPlayer.y + newPlayer.height / 2 + startLengthVector.y;
+
+    this.checkCollision();
+  },
+
+  checkCollision: function () {
+    const collision = isLineRectCollision(
+      this.x,
+      this.y,
+      this.myVector.x + this.x,
+      this.myVector.y + this.y,
+      enemy.x,
+      enemy.y,
+      enemy.width,
+      enemy.height,
+      game
+    );
+    collision ? console.log(collision) : "";
+  },
+
+  draw: function () {
+    drawImagePartWithTransform(
+      bigSpritev7,
+      spriteSheetData.items.weapons.silverSword.x,
+      spriteSheetData.items.weapons.silverSword.y,
+      spriteSheetData.items.weapons.silverSword.w,
+      spriteSheetData.items.weapons.silverSword.h,
+      this.x - spriteSheetData.items.weapons.silverSword.w / 2,
+      this.y - spriteSheetData.items.weapons.silverSword.h,
+      spriteSheetData.items.weapons.silverSword.w,
+      spriteSheetData.items.weapons.silverSword.h,
+      false,
+      false,
+      this.myVector.getAngleDeg() + 90,
+      0,
+      spriteSheetData.items.weapons.silverSword.h / 2,
+      game.ctx,
+      game.camera.x,
+      game.camera.y,
+      true
+    );
+
+    // draw hitboxLine
+    if (game.isDebug) {
+      drawLineOnMap(
+        this.x,
+        this.y,
+        this.myVector.x + this.x,
+        this.myVector.y + this.y,
+        game.ctx,
+        game.camera,
+        "red",
+        2
+      );
+    }
+  },
+};
+
 function update(deltaTime) {
-  // player.applyForce(DGame.vector.create(0, 0.01));
-  // player.applyForce(DGame.vector.create(0.01, 0));
-  // game.camera.set(player.position.x, player.position.y);
-
   newPlayer.WSADMove(game);
-
-  // newPlayer.moveToClickPoint();
-
-  // newPlayer.mouseMove();
 
   enemy.moveToClickPoint(game);
 
@@ -94,39 +173,19 @@ function draw(deltaTime) {
   tiled.drawLayer("walls");
   tiled.drawLayer("chests");
 
-  // player.draw(deltaTime);
-
-  // test
-
   newPlayer.update();
   newPlayer.draw(deltaTime);
+  silverSword.update(deltaTime);
 
   enemy.update();
   enemy.draw(deltaTime);
 
   tiled.drawLayer("foreground");
-  // newPlayer.anim.rotateDeg = rotate;
+  // newPlayer.anim.idle.rotateDeg = rotate;
   rotate++;
   if (rotate > 360) rotate = 0;
 
-  // collision WIP
-  // const chunkIndex = DGame.tiled.getChunkIndex(
-  //   player.position.x,
-  //   player.position.y,
-  //   2,
-  //   jsonData
-  // );
-
-  // if (currentChunkIndex !== chunkIndex) {
-  //   currentChunkIndex = chunkIndex;
-  //   collidable.length = 0;
-  //   addTilesToCollidable(2, currentChunkIndex);
-  //   // console.log("collidable", collidable);
-  // }
-
-  // draw collidable
-
-  // collidable.forEach((el) => DGame.draw.rect(el.x, el.y, 16, 16));
+  silverSword.draw();
 
   tiled.drawDebug();
 }

@@ -444,6 +444,10 @@ export class Character extends Sprite {
     this.y += this.vel.y;
   }
 
+  applyKnockback(knockback) {
+    this.vel = knockback;
+  }
+
   collideManager() {
     if (this.isCollisionWithCollidableTiles) this.collideWithCollidableTiled();
     // console.log(this.collisionWithSprites.length);
@@ -1046,7 +1050,8 @@ export class Vector {
    */
   setMag(mag) {
     this.normalize();
-    this.mul(mag);
+    this.mul(mag, mag);
+    return this;
   }
 
   /**
@@ -1085,8 +1090,11 @@ export class Vector {
    */
   setAngleDeg(angle) {
     if (angle !== undefined) {
+      const mag = this.getMag();
       const rad = (angle * Math.PI) / 180;
       this.set(Math.cos(rad), Math.sin(rad));
+      this.setMag(mag);
+      return this;
     } else {
       console.log("No angle value provided.");
     }
@@ -1282,4 +1290,93 @@ export function drawLineOnMap(
   ctx.closePath();
   ctx.strokeStyle = "black";
   ctx.lineWidth = 1;
+}
+
+export function drawCircleOnMap(
+  x,
+  y,
+  radius,
+  ctx,
+  camera,
+  color = "black",
+  lineWidth = 1
+) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.beginPath();
+  ctx.arc(x - camera.x, y - camera.y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.closePath();
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 1;
+}
+
+export function isLineRectCollision(x1, y1, x2, y2, rx, ry, rw, rh, game) {
+  // check if the line has hit any of the rectangle's sides
+  // uses the Line/Line function below
+  const left = isLineLineCollision(x1, y1, x2, y2, rx, ry, rx, ry + rh, game);
+  const right = isLineLineCollision(
+    x1,
+    y1,
+    x2,
+    y2,
+    rx + rw,
+    ry,
+    rx + rw,
+    ry + rh,
+    game
+  );
+  const top = isLineLineCollision(x1, y1, x2, y2, rx, ry, rx + rw, ry, game);
+  const bottom = isLineLineCollision(
+    x1,
+    y1,
+    x2,
+    y2,
+    rx,
+    ry + rh,
+    rx + rw,
+    ry + rh,
+    game
+  );
+
+  // if ANY of the above are true, the line
+  // has hit the rectangle
+  return left || right || top || bottom;
+}
+
+// LINE/LINE
+export function isLineLineCollision(x1, y1, x2, y2, x3, y3, x4, y4, game) {
+  // calculate the direction of the lines
+  const uA =
+    ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) /
+    ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+  const uB =
+    ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) /
+    ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+
+  // if uA and uB are between 0-1, lines are colliding
+  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+    // optionally, draw a circle where the lines meet
+    if (game.isDebug) {
+      const intersectionX = x1 + uA * (x2 - x1);
+      const intersectionY = y1 + uA * (y2 - y1);
+
+      drawCircleOnMap(
+        intersectionX,
+        intersectionY,
+        3,
+        game.ctx,
+        game.camera,
+        "red",
+        2
+      );
+
+      // draw thes lines
+      drawLineOnMap(x1, y1, x2, y2, game.ctx, game.camera);
+      drawLineOnMap(x3, y3, x4, y4, game.ctx, game.camera);
+    }
+
+    return true;
+  }
+  return false;
 }
