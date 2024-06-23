@@ -10,11 +10,11 @@ import {
   isLineRectCollision,
 } from "./DGamev3.js";
 import { spriteSheetData } from "./bigSpritev7data.js";
-import jsonData from "./gamev9.json" assert { type: "json" };
+import jsonData from "./gamev9.json" with { type: "json" };
 
 const game = new Game();
 game.init("canvas", 1600, 800, 2);
-game.isDebug = false;
+// game.isDebug = false;
 
 const bigSpritev7 = new Image();
 bigSpritev7.src = "BigSpritev7.png";
@@ -45,6 +45,8 @@ newPlayer.addAnim(
 );
 
 const enemy = new Character(150, 50, 16, 18, game);
+enemy.addStats(100, 100, 10, 10, 10);
+console.log(enemy);
 
 enemy.addAnim(
   "idle",
@@ -78,6 +80,10 @@ const silverSword = {
   myVector: new Vector(0, 0),
   swingDeg: 0,
 
+  swingDuration: 360,
+  currSwingDuration: 0,
+  isSwinging: false,
+
   update: function (deltaTime) {
     const mousePos = new Vector(
       game.mouse.x + game.camera.x,
@@ -90,7 +96,7 @@ const silverSword = {
     // create vector from player to mouse
     this.myVector = mousePos.sub(playerCenterPos);
     this.myVector.setMag(30);
-    this.swingDeg += deltaTime / 3;
+    // this.swingDeg += deltaTime / 3;
     this.myVector.setAngleDeg(this.swingDeg);
 
     // create startLength vector
@@ -101,6 +107,27 @@ const silverSword = {
     this.y = newPlayer.y + newPlayer.height / 2 + startLengthVector.y;
 
     this.checkCollision();
+    this.swing(deltaTime);
+  },
+
+  swing: function (deltaTime) {
+    // jeśli myszka jest wcisnieta to kontynuuj machanie, jeśli myszka nie jest wcisnieta to zatrzymaj
+
+    if (game.mouse.isMouseDown) {
+      this.isSwinging = true;
+    }
+
+    if (this.isSwinging) {
+      this.currSwingDuration += deltaTime;
+
+      if (this.currSwingDuration >= this.swingDuration) {
+        this.isSwinging = false;
+        this.currSwingDuration = 0;
+      }
+    }
+
+    // console.log(this.currSwingDuration);
+    this.swingDeg = this.isSwinging ? this.currSwingDuration : 0;
   },
 
   checkCollision: function () {
@@ -115,7 +142,14 @@ const silverSword = {
       enemy.height,
       game
     );
-    collision ? console.log(collision) : "";
+    // collision ? console.log(collision) : "";
+
+    if (collision) {
+      enemy.takeDamage(10);
+      // console.log(enemy.stats.HP);
+
+      enemy.takeKnockback(this.myVector.getClone().normalize().mul(0.1, 0.1));
+    }
   },
 
   draw: function () {
@@ -131,7 +165,7 @@ const silverSword = {
       spriteSheetData.items.weapons.silverSword.h,
       false,
       false,
-      this.myVector.getAngleDeg() + 90,
+      this.myVector.getAngleDeg() - 90,
       0,
       spriteSheetData.items.weapons.silverSword.h / 2,
       game.ctx,
@@ -139,6 +173,8 @@ const silverSword = {
       game.camera.y,
       true
     );
+
+    // console.log(this.myVector.getAngleDeg(), this.myVector);
 
     // draw hitboxLine
     if (game.isDebug) {
@@ -159,7 +195,7 @@ const silverSword = {
 function update(deltaTime) {
   newPlayer.WSADMove(game);
 
-  enemy.moveToClickPoint(game);
+  // enemy.moveToClickPoint(game);
 
   game.setCamera(newPlayer.x, newPlayer.y);
   // console.log(game.mouse.isMouseDown);

@@ -415,6 +415,16 @@ export class Character extends Sprite {
 
     this.collisionWithSprites = [];
     this.isCollisionWithCollidableTiles = false;
+
+    // this.stats = {
+    //   maxHP: 100,
+    //   HP: 100,
+    //   maxMP: 100,
+    //   MP: 100,
+    //   attack: 10,
+    //   defense: 10,
+    //   movementSpeed: 10,
+    // };
   }
 
   update() {
@@ -446,6 +456,36 @@ export class Character extends Sprite {
 
   applyKnockback(knockback) {
     this.vel = knockback;
+  }
+
+  addStats(maxHP, maxMP, attack, defense, movementSpeed) {
+    this.stats = {};
+    this.stats.maxHP = maxHP;
+    this.stats.HP = maxHP;
+    this.stats.maxMP = maxMP;
+    this.stats.MP = maxMP;
+    this.stats.attack = attack;
+    this.stats.defense = defense;
+    this.stats.movementSpeed = movementSpeed;
+
+    // chceck if all stats are added, if not console log error
+    const statsKeys = Object.keys(this.stats);
+    if (statsKeys.length !== 7) {
+      console.log("all stats are not added");
+    }
+  }
+
+  takeDamage(damage) {
+    // if hp is less than 0 set hp to 0
+    this.stats.HP = Math.max(0, this.stats.HP - damage);
+  }
+
+  takeKnockback(vector) {
+    if (vector instanceof Vector) {
+      this.vel = vector;
+    } else {
+      console.warn("Not a vector in takeKnockback");
+    }
   }
 
   collideManager() {
@@ -995,6 +1035,8 @@ export class Vector {
   mul(x, y) {
     this.x *= x;
     this.y *= y;
+
+    return this;
   }
 
   /**
@@ -1013,14 +1055,13 @@ export class Vector {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
-  /**
-   * Normalizes the vector if it's not zero-length.
-   */
   normalize() {
     const len = this.getLen();
     if (len !== 0) {
       this.x /= len;
       this.y /= len;
+
+      return this;
     } else {
       // console.log("Tried to normalize a zero-length vector.");
     }
@@ -1117,7 +1158,7 @@ export class Vector {
    */
   getAngleDeg() {
     const rad = Math.atan2(this.y, this.x);
-    return (rad * 180) / Math.PI;
+    return (((rad + Math.PI) * 180) / Math.PI) % 360;
   }
 
   /**
